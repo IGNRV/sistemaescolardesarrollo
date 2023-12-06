@@ -2,96 +2,66 @@
 // Incluye la conexión a la base de datos
 require_once 'db.php';
 
-// Inicia sesión
-session_start();
-
 // Define una variable para el mensaje
 $mensaje = '';
 
 // Verifica si el usuario está logueado
-if (!isset($_SESSION['correo_electronico'])) {
+if (!isset($_SESSION['EMAIL'])) {
     header('Location: login.php');
     exit;
 }
 
-$correo_electronico = $_SESSION['correo_electronico'];
-// Busca el id del usuario en la tabla 'usuarios'
-$queryUsuario = "SELECT id FROM usuarios WHERE correo_electronico = '$correo_electronico'";
-$resultadoUsuario = $conn->query($queryUsuario);
+$EMAIL = $_SESSION['EMAIL'];
 
-if ($resultadoUsuario->num_rows > 0) {
-    $usuario = $resultadoUsuario->fetch_assoc();
-    $id_usuario = $usuario['id'];
-
-    // Buscar información de contacto de emergencia
-    $queryContactoEmergencia = "SELECT * FROM contacto_emergencia WHERE id_usuario = $id_usuario";
-    $resultadoContactoEmergencia = $conn->query($queryContactoEmergencia);
-
-    if ($resultadoContactoEmergencia->num_rows > 0) {
-        $contactoEmergencia = $resultadoContactoEmergencia->fetch_assoc();
-    } else {
-        $mensaje = "No se encontraron datos de contacto de emergencia.";
-    }
-
-    // Recuperar antecedentes médicos del usuario
-    $queryAntecedentesMedicos = "SELECT * FROM antecedentes_medicos WHERE id_usuario = $id_usuario";
-    $resultadoAntecedentesMedicos = $conn->query($queryAntecedentesMedicos);
-} else {
-    $mensaje = "Usuario no encontrado.";
-    exit;
+// Función para buscar los datos del alumno y su contacto de emergencia
+function buscarDatos($conn, $rutAlumno) {
+    $stmt = $conn->prepare("SELECT ce.ID_CONTACTO, ce.RUT_APODERADO, a.RUT_ALUMNO, ce.ID_ALUMNO, ce.PARENTESCO, ce.NOMBRE, ce.AP_PATERNO, ce.AP_MATERNO, ce.MAIL_EMERGENCIA, ce.FONO_EMERGENCIA, ce.FECHA_INGRESO, ce.PERIODO_ESCOLAR, ce.STATUS, ce.DELETE_FLAG, ce.DATE_CREATED, ce.DATE_UPDATED FROM Alumno AS a LEFT JOIN Contacto_Emergencia AS ce ON ce.ID_ALUMNO = a.ID_ALUMNO WHERE a.RUT_ALUMNO = ?");
+    $stmt->bind_param("s", $rutAlumno);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+    $stmt->close();
+    return $resultado;
 }
 
-// Manejar la inserción de antecedentes médicos
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['agregar_antecedentes'])) {
-    $categoria = $conn->real_escape_string($_POST['categoria']);
-    $descripcion = $conn->real_escape_string($_POST['descripcion']);
-    $fecha = $conn->real_escape_string($_POST['fecha']);
+// Procesar el formulario de búsqueda
+if (isset($_POST['buscarAlumno'])) {
+    $rutAlumno = $_POST['rutAlumno'];
+    $resultado = buscarDatos($conn, $rutAlumno);
 
-    // Inserta los antecedentes médicos en la base de datos
-    $insertQuery = "INSERT INTO antecedentes_medicos (categoria, descripcion, fecha, id_usuario) VALUES ('$categoria', '$descripcion', '$fecha', $id_usuario)";
-    if ($conn->query($insertQuery) === TRUE) {
-        $mensaje = "Antecedentes médicos agregados correctamente.";
+    if ($resultado->num_rows > 0) {
+        $contactoEmergencia = $resultado->fetch_assoc();
+        $mensaje = "Alumno y contacto de emergencia encontrados.";
     } else {
-        $mensaje = "Error al agregar los antecedentes médicos: " . $conn->error;
+        $mensaje = "Alumno no encontrado.";
     }
 }
 
-// Manejar la eliminación de un antecedente médico
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['eliminar_antecedente'])) {
-    $idAntecedente = $conn->real_escape_string($_POST['id_antecedente']);
-    $deleteQuery = "DELETE FROM antecedentes_medicos WHERE id = $idAntecedente AND id_usuario = $id_usuario";
-    if ($conn->query($deleteQuery) === TRUE) {
-        $mensaje = "Antecedente médico eliminado correctamente.";
-    } else {
-        $mensaje = "Error al eliminar el antecedente médico: " . $conn->error;
-    }
-}
+// Procesar el formulario de actualización
+if (isset($_POST['actualizar_contacto'])) {
+    $rut = $_POST['rut'];
+    $nombre = $_POST['nombre'];
+    $apPaterno = $_POST['ap_paterno'];
+    $apMaterno = $_POST['ap_materno'];
+    $fonoEmergencia = $_POST['fono_emergencia'];
+    $mailEmergencia = $_POST['mail_emergencia'];
+    $rutAlumno = $_POST['rutAlumno'];
 
-// Manejar la actualización de contacto de emergencia
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['actualizar_contacto'])) {
-    // Recoger los datos del formulario
-    $rut = $conn->real_escape_string($_POST['rut']);
-    $nombres = $conn->real_escape_string($_POST['nombres']);
-    $apellido_paterno = $conn->real_escape_string($_POST['apellido_paterno']);
-    $apellido_materno = $conn->real_escape_string($_POST['apellido_materno']);
-    $telefono = $conn->real_escape_string($_POST['telefono']);
-    $correo_electronico = $conn->real_escape_string($_POST['correo_electronico']);
+    $stmt = $conn->prepare("UPDATE Contacto_Emergencia SET NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, MAIL_EMERGENCIA = ?, FONO_EMERGENCIA = ? WHERE RUT_APODERADO = ?");
+    $stmt->bind_param("ssssss", $nombre, $apPaterno, $apMaterno, $mailEmergencia, $fonoEmergencia, $rut);
+    $stmt->execute();
 
-    // Actualizar los datos en la base de datos
-    $updateQuery = "UPDATE contacto_emergencia SET rut='$rut', nombres='$nombres', apellido_paterno='$apellido_paterno', apellido_materno='$apellido_materno', telefono='$telefono', correo_electronico='$correo_electronico' WHERE id_usuario = $id_usuario";
-    if ($conn->query($updateQuery) === TRUE) {
-        $mensaje = "Contacto de emergencia actualizado correctamente.";
-    
-        // Realiza la consulta nuevamente para obtener datos actualizados
-        $resultadoContactoEmergencia = $conn->query($queryContactoEmergencia);
-        if ($resultadoContactoEmergencia->num_rows > 0) {
-            $contactoEmergencia = $resultadoContactoEmergencia->fetch_assoc();
+    if ($stmt->affected_rows > 0) {
+        $mensaje = "Contacto de emergencia actualizado con éxito.";
+        $resultado = buscarDatos($conn, $rutAlumno);
+        if ($resultado->num_rows > 0) {
+            $contactoEmergencia = $resultado->fetch_assoc();
         }
     } else {
-        $mensaje = "Error al actualizar el contacto de emergencia: " . $conn->error;
+        $mensaje = "Error al actualizar el contacto de emergencia.";
     }
+    $stmt->close();
 }
-
+$rutAlumno = isset($_POST['rutAlumno']) ? $_POST['rutAlumno'] : '';
 
 ?>
 <?php if (!empty($mensaje)): ?>
@@ -102,34 +72,40 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['actualizar_contacto'])
 <div class="emergency-contact">
     <h1>Contacto de emergencia</h1>
     <form method="post">
+        <div class="form-group">
+            <label for="rutAlumno">Rut del alumno:</label>
+            <!-- Utiliza el valor de $rutAlumno para mantener el valor después de enviar el formulario -->
+            <input type="text" class="form-control" id="rutAlumno" name="rutAlumno" placeholder="Ingrese RUT del alumno" value="<?php echo htmlspecialchars($rutAlumno); ?>">
+            <button type="submit" class="btn btn-primary custom-button mt-3" name="buscarAlumno">Buscar</button>
+        </div>
             <div class="form-row">
                 <div class="form-group col-md-12">
                     <label for="inputRUT">RUT (Sin puntos ni guion)</label>
-                    <input type="text" name="rut" class="form-control" id="inputRUT" value="<?php echo $contactoEmergencia['rut'] ?? ''; ?>">
+                    <input type="text" name="rut" class="form-control" id="inputRUT" value="<?php echo isset($contactoEmergencia['RUT_APODERADO']) ? $contactoEmergencia['RUT_APODERADO'] : ''; ?>">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group col-md-4">
                     <label for="inputNombres">Nombres</label>
-                    <input type="text" name="nombres" class="form-control" id="inputNombres" value="<?php echo $contactoEmergencia['nombres'] ?? ''; ?>">
+                    <input type="text" name="nombre" class="form-control" id="inputNombres" value="<?php echo isset($contactoEmergencia['NOMBRE']) ? $contactoEmergencia['NOMBRE'] : ''; ?>">
                 </div>
                 <div class="form-group col-md-4">
                     <label for="inputApellidoPaterno">Ap. Paterno</label>
-                    <input type="text" name="apellido_paterno" class="form-control" id="inputApellidoPaterno" value="<?php echo $contactoEmergencia['apellido_paterno'] ?? ''; ?>">
+                    <input type="text" name="ap_paterno" class="form-control" id="inputApellidoPaterno" value="<?php echo isset($contactoEmergencia['AP_PATERNO']) ? $contactoEmergencia['AP_PATERNO'] : ''; ?>">
                 </div>
                 <div class="form-group col-md-4">
                     <label for="inputApellidoMaterno">Ap. Materno</label>
-                    <input type="text" name="apellido_materno" class="form-control" id="inputApellidoMaterno" value="<?php echo $contactoEmergencia['apellido_materno'] ?? ''; ?>">
+                    <input type="text" name="ap_materno" class="form-control" id="inputApellidoMaterno" value="<?php echo isset($contactoEmergencia['AP_MATERNO']) ? $contactoEmergencia['AP_MATERNO'] : ''; ?>">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group col-md-6">
                     <label for="inputTelefono">Teléfono</label>
-                    <input type="text" name="telefono" class="form-control" id="inputTelefono" value="<?php echo $contactoEmergencia['telefono'] ?? ''; ?>">
+                    <input type="text" name="fono_emergencia" class="form-control" id="inputTelefono" value="<?php echo isset($contactoEmergencia['FONO_EMERGENCIA']) ? $contactoEmergencia['FONO_EMERGENCIA'] : ''; ?>">
                 </div>
                 <div class="form-group col-md-6">
                     <label for="inputEmail">Correo Electrónico</label>
-                    <input type="email" name="correo_electronico" class="form-control" id="inputEmail" value="<?php echo $contactoEmergencia['correo_electronico'] ?? ''; ?>">
+                    <input type="email" name="mail_emergencia" class="form-control" id="inputEmail" value="<?php echo isset($contactoEmergencia['MAIL_EMERGENCIA']) ? $contactoEmergencia['MAIL_EMERGENCIA'] : ''; ?>">
                 </div>
             </div>
             <button type="submit" class="btn btn-primary btn-block" name="actualizar_contacto">ACTUALIZAR CONTACTO DE EMERGENCIA</button>
@@ -149,23 +125,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['actualizar_contacto'])
                 </tr>
             </thead>
         <tbody>
-            <?php
-            $queryAntecedentesMedicos = "SELECT * FROM antecedentes_medicos WHERE id_usuario = $id_usuario";
-            $resultadoAntecedentesMedicos = $conn->query($queryAntecedentesMedicos);
-            while($fila = $resultadoAntecedentesMedicos->fetch_assoc()):
-            ?>
             <tr>
-                <td><?php echo htmlspecialchars($fila['categoria']); ?></td>
-                <td><?php echo htmlspecialchars($fila['descripcion']); ?></td>
-                <td><?php echo htmlspecialchars(date('d-m-Y', strtotime($fila['fecha']))); ?></td>
+                <td></td>
+                <td></td>
+                <td></td>
                 <td>
                     <form action="" method="post">
-                        <input type="hidden" name="id_antecedente" value="<?php echo $fila['id']; ?>">
+                        <input type="hidden" name="id_antecedente" value="">
                         <button type="submit" name="eliminar_antecedente" class="btn btn-danger">Eliminar</button>
                     </form>
                 </td>
             </tr>
-            <?php endwhile; ?>
         </tbody>
     </table>
         <form method="post">
@@ -187,11 +157,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['actualizar_contacto'])
     </div>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var inputRut = document.getElementById('inputRUT');
-        
-        inputRut.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-    });
+
 </script>
