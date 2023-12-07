@@ -1,5 +1,4 @@
 <?php
-
 // Asegúrate de que un usuario haya iniciado sesión
 if (!isset($_SESSION['EMAIL'])) {
     header('Location: login.php');
@@ -13,72 +12,51 @@ require_once 'db.php';
 $EMAIL = $_SESSION['EMAIL'];
 $queryUsuario = "SELECT ID FROM USERS WHERE EMAIL = '$EMAIL'";
 $resultadoUsuario = $conn->query($queryUsuario);
-/* 
-if ($resultadoUsuario->num_rows > 0) {
-    $usuario = $resultadoUsuario->fetch_assoc();
-    $id_usuario = $usuario['id'];
-} else {
-    echo "Usuario no encontrado.";
-    exit;
-}
 
-if (isset($_POST['actualizar_datos'])) {
-    // Recuperar los valores del formulario
-    $rut = $conn->real_escape_string($_POST['rut']);
-    $parentesco = $conn->real_escape_string($_POST['parentesco']);
-    $nombre = $conn->real_escape_string($_POST['nombre']);
-    $apellidoPaterno = $conn->real_escape_string($_POST['apellidoPaterno']);
-    $apellidoMaterno = $conn->real_escape_string($_POST['apellidoMaterno']);
-    $telefonoParticular = $conn->real_escape_string($_POST['telefonoParticular']);
-    $telefonoTrabajo = $conn->real_escape_string($_POST['telefonoTrabajo']);
-    $correoElectronicoPersonal = $conn->real_escape_string($_POST['correoElectronicoPersonal']);
-    $correoElectronicoTrabajo = $conn->real_escape_string($_POST['correoElectronicoTrabajo']);
-    $calle = $conn->real_escape_string($_POST['calle']);
-    $n_calle = $conn->real_escape_string($_POST['n_calle']);
-    $restoDireccion = $conn->real_escape_string($_POST['restoDireccion']);
-    $villaPoblacion = $conn->real_escape_string($_POST['villaPoblacion']);
-    $comuna = $conn->real_escape_string($_POST['comuna']);
-    $ciudad = $conn->real_escape_string($_POST['ciudad']);
-    $tutorAcademico = isset($_POST['tutorAcademico']) ? 1 : 0;
+$apoderados = []; // Array para almacenar los datos de los apoderados
 
-    // Insertar los datos en la tabla padres_apoderados
-    $sql = "INSERT INTO padres_apoderados (rut, parentesco, nombre, apellido_paterno, apellido_materno, telefono_particular, telefono_trabajo, correo_electronico_particular, correo_electronico_trabajo, calle, n_calle, resto_direccion, villa_poblacion, comuna, ciudad, tutor_academico, id_usuario) VALUES ('$rut', '$parentesco', '$nombre', '$apellidoPaterno', '$apellidoMaterno', '$telefonoParticular', '$telefonoTrabajo', '$correoElectronicoPersonal', '$correoElectronicoTrabajo', '$calle', '$n_calle', '$restoDireccion', '$villaPoblacion', '$comuna', '$ciudad', '$tutorAcademico', '$id_usuario')";
+if (isset($_POST['buscarAlumno'])) {
+    $rutAlumno = $_POST['rutAlumno'];
 
-    if ($conn->query($sql)) {
-        $_SESSION['mensaje'] = "Datos actualizados correctamente.";
+    // Consulta a la base de datos
+    $stmt = $conn->prepare("SELECT 
+                                a.RUT_ALUMNO,
+                                ap.NOMBRE,
+                                ap.AP_PATERNO,
+                                ap.AP_MATERNO,
+                                ap.PARENTESCO,
+                                ap.MAIL_PART,
+                                ap.FONO_PART
+                            FROM
+                                ALUMNO AS a
+                                    LEFT JOIN
+                                REL_ALUM_APOD AS raa ON raa.ID_ALUMNO = a.ID_ALUMNO
+                                    LEFT JOIN
+                                APODERADO AS ap ON ap.ID_APODERADO = raa.ID_APODERADO
+                            WHERE
+                                a.RUT_ALUMNO = ?");
+    $stmt->bind_param("s", $rutAlumno);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+
+    if ($resultado->num_rows > 0) {
+        $mensaje = "Datos del alumno encontrados.";
+        $apoderados = $resultado->fetch_all(MYSQLI_ASSOC);
     } else {
-        $_SESSION['mensaje'] = "Error al actualizar datos: " . $conn->error;
+        $mensaje = "No se encontró ningún alumno con ese RUT.";
     }
-
-    // Recargar la página para mostrar los datos actualizados
-    header("Location: bienvenido.php?page=padres_apoderados");
-    exit;
+    $stmt->close();
 }
 
-if (isset($_POST['eliminar'])) {
-    $idEliminar = $_POST['idEliminar'];
-    $sqlEliminar = "DELETE FROM padres_apoderados WHERE id = $idEliminar AND id_usuario = $id_usuario";
-    if ($conn->query($sqlEliminar)) {
-        $_SESSION['mensaje'] = "Registro eliminado correctamente.";
-    } else {
-        $_SESSION['mensaje'] = "Error al eliminar el registro: " . $conn->error;
-    }
-    header("Location: bienvenido.php?page=padres_apoderados");
-    exit;
-}
-
-// Consulta para obtener los datos de padres/apoderados
-$queryPadres = "SELECT * FROM padres_apoderados WHERE id_usuario = $id_usuario";
-$resultadoPadres = $conn->query($queryPadres);
-
-function rut($rut) {
-    return number_format(substr($rut, 0, -1), 0, "", ".") . '-' . substr($rut, strlen($rut) - 1, 1);
-} */
 ?>
 
-
+<?php if (!empty($mensaje)): ?>
+    <div class="alert alert-success" role="alert">
+        <?php echo $mensaje; ?>
+    </div>
+<?php endif; ?>
 <div class="parents-apoderados">
-    <h2>Datos padres/apoderados</h2>
+<h2>Datos padres/apoderados</h2>
     <div class="table-responsive">
         <table class="table">
             <thead>
@@ -88,30 +66,34 @@ function rut($rut) {
                     <th>Parentesco</th>
                     <th>Mail</th>
                     <th>Teléfono</th>
-                    <th>Otros</th>
                 </tr>
             </thead>
             <tbody>
+                <?php foreach ($apoderados as $apoderado): ?>
                     <tr>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td>
-                        <form method="post" action="padres_apoderados.php">
-                                <input type="hidden" name="idEliminar" value="">
-                                <button type="submit" name="eliminar" class="btn btn-danger btn-sm">Eliminar</button>
-                            </form>
-                        </td>
+                        <td><?php echo htmlspecialchars($apoderado['RUT_ALUMNO']); ?></td>
+                        <td><?php echo htmlspecialchars($apoderado['NOMBRE']) . " " . htmlspecialchars($apoderado['AP_PATERNO']) . " " . htmlspecialchars($apoderado['AP_MATERNO']); ?></td>
+                        <td><?php echo htmlspecialchars($apoderado['PARENTESCO']); ?></td>
+                        <td><?php echo htmlspecialchars($apoderado['MAIL_PART']); ?></td>
+                        <td><?php echo htmlspecialchars($apoderado['FONO_PART']); ?></td>
                     </tr>
+                <?php endforeach; ?>
             </tbody>
         </table>
     </div>
+
+
+    <form method="post">
+        <div class="form-group">
+            <label for="rutAlumno">Rut del alumno:</label>
+            <!-- Utiliza el valor de $rutAlumno para mantener el valor después de enviar el formulario -->
+            <input type="text" class="form-control" id="rutAlumno" name="rutAlumno" placeholder="Ingrese RUT del alumno" value="<?php echo htmlspecialchars($rutAlumno); ?>">
+            <button type="submit" class="btn btn-primary custom-button mt-3" name="buscarAlumno">Buscar</button>
+        </div>
+    </form>
     
     <h3>Información de padres/apoderados</h3>
     <form method="POST" action="padres_apoderados.php">
-
         <div class="form-group">
             <label for="rut">RUT</label>
             <input type="text" class="form-control" name="rut" id="rut" maxlength="9">
