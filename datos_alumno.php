@@ -15,11 +15,11 @@ if (!isset($_SESSION['EMAIL'])) {
 } else {
     $EMAIL = $_SESSION['EMAIL'];
     // Busca el id del usuario en la tabla 'usuarios'
-    $queryUsuario = "SELECT id FROM users WHERE EMAIL = '$EMAIL'";
+    $queryUsuario = "SELECT ID FROM USERS WHERE EMAIL = '$EMAIL'";
     $resultadoUsuario = $conn->query($queryUsuario);
     if ($resultadoUsuario->num_rows > 0) {
         $usuario = $resultadoUsuario->fetch_assoc();
-        $id_usuario = $usuario['id'];
+        $id_usuario = $usuario['ID'];
     } else {
         // Manejar el error si el usuario no se encuentra
         $mensaje = "Usuario no encontrado.";
@@ -31,7 +31,7 @@ if (!isset($_SESSION['EMAIL'])) {
 if (isset($_POST['buscarAlumno'])) {
     $rutAlumno = $_POST['rutAlumno'];
     // Preparar la consulta SQL para buscar el alumno
-    $stmt = $conn->prepare("SELECT * FROM Alumno WHERE RUT_ALUMNO = ?");
+    $stmt = $conn->prepare("SELECT * FROM ALUMNO WHERE RUT_ALUMNO = ?");
     $stmt->bind_param("s", $rutAlumno);
     $stmt->execute();
     $resultado = $stmt->get_result();

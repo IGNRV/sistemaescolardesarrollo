@@ -15,7 +15,7 @@ $EMAIL = $_SESSION['EMAIL'];
 
 // Función para buscar los datos del alumno y su contacto de emergencia
 function buscarDatos($conn, $rutAlumno) {
-    $stmt = $conn->prepare("SELECT ce.ID_CONTACTO, ce.RUT_APODERADO, a.RUT_ALUMNO, ce.ID_ALUMNO, ce.PARENTESCO, ce.NOMBRE, ce.AP_PATERNO, ce.AP_MATERNO, ce.MAIL_EMERGENCIA, ce.FONO_EMERGENCIA, ce.FECHA_INGRESO, ce.PERIODO_ESCOLAR, ce.STATUS, ce.DELETE_FLAG, ce.DATE_CREATED, ce.DATE_UPDATED FROM Alumno AS a LEFT JOIN Contacto_Emergencia AS ce ON ce.ID_ALUMNO = a.ID_ALUMNO WHERE a.RUT_ALUMNO = ?");
+    $stmt = $conn->prepare("SELECT ce.ID_CONTACTO, ce.RUT_APODERADO, a.RUT_ALUMNO, ce.ID_ALUMNO, ce.PARENTESCO, ce.NOMBRE, ce.AP_PATERNO, ce.AP_MATERNO, ce.MAIL_EMERGENCIA, ce.FONO_EMERGENCIA, ce.FECHA_INGRESO, ce.PERIODO_ESCOLAR, ce.STATUS, ce.DELETE_FLAG, ce.DATE_CREATED, ce.DATE_UPDATED FROM ALUMNO AS a LEFT JOIN CONTACTO_EMERGENCIA AS ce ON ce.ID_ALUMNO = a.ID_ALUMNO WHERE a.RUT_ALUMNO = ?");
     $stmt->bind_param("s", $rutAlumno);
     $stmt->execute();
     $resultado = $stmt->get_result();
@@ -46,7 +46,7 @@ if (isset($_POST['actualizar_contacto'])) {
     $mailEmergencia = $_POST['mail_emergencia'];
     $rutAlumno = $_POST['rutAlumno'];
 
-    $stmt = $conn->prepare("UPDATE Contacto_Emergencia SET NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, MAIL_EMERGENCIA = ?, FONO_EMERGENCIA = ? WHERE RUT_APODERADO = ?");
+    $stmt = $conn->prepare("UPDATE CONTACTO_EMERGENCIA SET NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, MAIL_EMERGENCIA = ?, FONO_EMERGENCIA = ? WHERE RUT_APODERADO = ?");
     $stmt->bind_param("ssssss", $nombre, $apPaterno, $apMaterno, $mailEmergencia, $fonoEmergencia, $rut);
     $stmt->execute();
 

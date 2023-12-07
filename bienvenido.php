@@ -14,7 +14,7 @@ if (!isset($_SESSION['EMAIL'])) {
 
 // Obtener el ID del usuario que ha iniciado sesión
 $EMAIL = $_SESSION['EMAIL'];
-$queryUsuario = "SELECT ID FROM users WHERE EMAIL = '$EMAIL'";
+$queryUsuario = "SELECT ID FROM USERS WHERE EMAIL = '$EMAIL'";
 $resultadoUsuario = $conn->query($queryUsuario);
 
 /* $id_usuario = '';

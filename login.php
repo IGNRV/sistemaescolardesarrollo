@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $PASSWORD = $conn->real_escape_string($_POST['PASSWORD']);
 
     // Busca el usuario en la base de datos
-    $sql = "SELECT ID, EMAIL, NAME, PASSWORD FROM users WHERE EMAIL = '{$EMAIL}'";
+    $sql = "SELECT ID, EMAIL, NAME, PASSWORD FROM USERS WHERE EMAIL = '{$EMAIL}'";
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {

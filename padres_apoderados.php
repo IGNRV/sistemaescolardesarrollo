@@ -1,8 +1,7 @@
 <?php
-session_start();
 
 // Asegúrate de que un usuario haya iniciado sesión
-if (!isset($_SESSION['correo_electronico'])) {
+if (!isset($_SESSION['EMAIL'])) {
     header('Location: login.php');
     exit;
 }
@@ -11,10 +10,10 @@ if (!isset($_SESSION['correo_electronico'])) {
 require_once 'db.php';
 
 // Obtener el id_usuario del usuario que ha iniciado sesión
-$correo_electronico = $_SESSION['correo_electronico'];
-$queryUsuario = "SELECT id FROM usuarios WHERE correo_electronico = '$correo_electronico'";
+$EMAIL = $_SESSION['EMAIL'];
+$queryUsuario = "SELECT ID FROM USERS WHERE EMAIL = '$EMAIL'";
 $resultadoUsuario = $conn->query($queryUsuario);
-
+/* 
 if ($resultadoUsuario->num_rows > 0) {
     $usuario = $resultadoUsuario->fetch_assoc();
     $id_usuario = $usuario['id'];
@@ -74,7 +73,7 @@ $resultadoPadres = $conn->query($queryPadres);
 
 function rut($rut) {
     return number_format(substr($rut, 0, -1), 0, "", ".") . '-' . substr($rut, strlen($rut) - 1, 1);
-}
+} */
 ?>
 
 
@@ -93,21 +92,19 @@ function rut($rut) {
                 </tr>
             </thead>
             <tbody>
-                <?php while($fila = $resultadoPadres->fetch_assoc()): ?>
                     <tr>
-                        <td><?php echo htmlspecialchars(rut($fila['rut'])); ?></td>
-                        <td><?php echo htmlspecialchars($fila['nombre']) . " " . htmlspecialchars($fila['apellido_paterno']) . " " . htmlspecialchars($fila['apellido_materno']); ?></td>
-                        <td><?php echo htmlspecialchars($fila['parentesco']); ?></td>
-                        <td><?php echo htmlspecialchars($fila['correo_electronico_particular']) . "<br>" . htmlspecialchars($fila['correo_electronico_trabajo']); ?></td>
-                        <td><?php echo htmlspecialchars($fila['telefono_particular']) . "<br>" . htmlspecialchars($fila['telefono_trabajo']); ?></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
                         <td>
                         <form method="post" action="padres_apoderados.php">
-                                <input type="hidden" name="idEliminar" value="<?php echo $fila['id']; ?>">
+                                <input type="hidden" name="idEliminar" value="">
                                 <button type="submit" name="eliminar" class="btn btn-danger btn-sm">Eliminar</button>
                             </form>
                         </td>
                     </tr>
-                <?php endwhile; ?>
             </tbody>
         </table>
     </div>
@@ -182,11 +179,3 @@ function rut($rut) {
         <button type="submit" class="btn btn-primary btn-block custom-button" name="actualizar_datos">ACTUALIZAR DATOS</button>
 </form>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var inputRut = document.getElementById('rut');
-        inputRut.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-        });
-    });
-</script>
