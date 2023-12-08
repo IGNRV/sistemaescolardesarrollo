@@ -345,6 +345,19 @@ if (isset($_POST['btnBuscarAlumno'])) {
         transferPaymentForm.submit();
     });
 });
+document.addEventListener('DOMContentLoaded', function() {
+        var btnSeleccionarValores = document.getElementById('btnSeleccionarValores');
+        var totalAPagarElement = document.getElementById('totalAPagar');
+
+        btnSeleccionarValores.addEventListener('click', function() {
+            var checkboxes = document.querySelectorAll('.seleccionarPago:checked');
+            var totalAPagar = 0;
+            checkboxes.forEach(function(checkbox) {
+                totalAPagar += parseFloat(checkbox.value);
+            });
+            totalAPagarElement.textContent = 'Total a Pagar $' + totalAPagar.toFixed(2);
+        });
+    });
 </script>
 
 </body>

@@ -103,6 +103,41 @@ if (!empty($apoderados)) {
 }
 
 
+if (isset($_POST['INGRESAR_DATOS'])) {
+    $medioPago = $_POST['medioPago'];
+    $bancoEmisor = $_POST['bancoEmisor'];
+    $tipoMedioPago = $_POST['tipoMedioPago'];
+    $rutPagador = $_POST['rut']; // Utiliza el valor del input 'rut' del formulario
+
+
+
+    // Obtener el último número de medio de pago y aumentarlo en 1
+    $stmt = $conn->prepare("SELECT MAX(NRO_MEDIOPAGO) AS ultimo_numero FROM MEDIOS_DE_PAGO");
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+    $fila = $resultado->fetch_assoc();
+    $nroMedioPago = (int)$fila['ultimo_numero'] + 1;
+
+    // Fecha actual
+    $fechaActual = date('Y-m-d');
+
+    // Insertar en la base de datos
+    $stmt = $conn->prepare("INSERT INTO MEDIOS_DE_PAGO (MEDIO_PAGO, BANCO_EMISOR, TIPO_MEDIOPAGO, RUT_PAGADOR, NRO_MEDIOPAGO, FECHA_SUSCRIPCION, ESTADO_MP, FECHA_VENCIMIENTO_MP, FECHA_INGRESO, FECHA_ACTIVACION, PERIODO_ESCOLAR) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $estadoMP = 1; // Estado activo
+    $fechaVencimientoMP = '2100-01-01';
+    $periodoEscolar = 2; // Número fijo según tu indicación
+
+    $stmt->bind_param("ssssssssssi", $medioPago, $bancoEmisor, $tipoMedioPago, $rutPagador, $nroMedioPago, $fechaActual, $estadoMP, $fechaVencimientoMP, $fechaActual, $fechaActual, $periodoEscolar);
+    $stmt->execute();
+
+    if ($stmt->affected_rows > 0) {
+        $mensaje = "Datos del medio de pago ingresados con éxito.";
+    } else {
+        $mensaje = "Error al ingresar los datos del medio de pago.";
+    }
+    $stmt->close();
+}
+
 
 
 ?>
@@ -210,6 +245,8 @@ if (!empty($apoderados)) {
             <label for="tipoMedioPago">Tipo de Medio de Pago</label>
             <input type="text" class="form-control" name="tipoMedioPago" id="tipoMedioPago" value="">
         </div>     
-        <button type="submit" class="btn btn-primary btn-block custom-button">INGRESAR DATOS</button>
+        <input type="hidden" name="rut" value="<?php echo htmlspecialchars($rutTutor); ?>">
+
+        <button type="submit" class="btn btn-primary btn-block custom-button" name="INGRESAR_DATOS">INGRESAR DATOS</button>
     </form>
 </div>
