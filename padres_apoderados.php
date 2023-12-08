@@ -22,6 +22,7 @@ if (isset($_POST['buscarAlumno'])) {
     $stmt = $conn->prepare("SELECT 
                                 a.ID_ALUMNO,
                                 a.RUT_ALUMNO,
+                                ap.RUT_APODERADO,
                                 ap.NOMBRE,
                                 ap.AP_PATERNO,
                                 ap.AP_MATERNO,
@@ -111,7 +112,7 @@ if (isset($_POST['actualizar_datos'])) {
             <tbody>
                 <?php foreach ($apoderados as $apoderado): ?>
                     <tr>
-                        <td><?php echo htmlspecialchars($apoderado['RUT_ALUMNO']); ?></td>
+                        <td><?php echo htmlspecialchars($apoderado['RUT_APODERADO']); ?></td>
                         <td><?php echo htmlspecialchars($apoderado['NOMBRE']) . " " . htmlspecialchars($apoderado['AP_PATERNO']) . " " . htmlspecialchars($apoderado['AP_MATERNO']); ?></td>
                         <td><?php echo htmlspecialchars($apoderado['PARENTESCO']); ?></td>
                         <td><?php echo htmlspecialchars($apoderado['MAIL_PART']); ?></td>

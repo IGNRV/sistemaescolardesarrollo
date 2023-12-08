@@ -7,6 +7,8 @@ ini_set('display_errors', 1);
 
 // Define una variable para el mensaje
 $mensaje = '';
+$observaciones = []; // Array para almacenar las observaciones
+$rutAlumno = ''; // Variable para almacenar el RUT del alumno buscado
 
 // Verifica si el usuario está logueado y obtiene su id
 if (!isset($_SESSION['EMAIL'])) {
@@ -14,14 +16,12 @@ if (!isset($_SESSION['EMAIL'])) {
     exit;
 } else {
     $EMAIL = $_SESSION['EMAIL'];
-    // Busca el id del usuario en la tabla 'usuarios'
     $queryUsuario = "SELECT ID FROM USERS WHERE EMAIL = '$EMAIL'";
     $resultadoUsuario = $conn->query($queryUsuario);
     if ($resultadoUsuario->num_rows > 0) {
         $usuario = $resultadoUsuario->fetch_assoc();
         $id_usuario = $usuario['ID'];
     } else {
-        // Manejar el error si el usuario no se encuentra
         $mensaje = "Usuario no encontrado.";
         exit;
     }
@@ -30,23 +30,33 @@ if (!isset($_SESSION['EMAIL'])) {
 // Verifica si se ha enviado el formulario de búsqueda
 if (isset($_POST['buscarAlumno'])) {
     $rutAlumno = $_POST['rutAlumno'];
-    // Preparar la consulta SQL para buscar el alumno
     $stmt = $conn->prepare("SELECT * FROM ALUMNO WHERE RUT_ALUMNO = ?");
     $stmt->bind_param("s", $rutAlumno);
     $stmt->execute();
     $resultado = $stmt->get_result();
 
     if ($resultado->num_rows > 0) {
-        // Alumno encontrado
         $mensaje = "Alumno encontrado.";
         $alumno = $resultado->fetch_assoc();
-        // Aquí puedes asignar los valores a las variables para mostrarlos en el formulario
+
+        // Consulta para obtener las observaciones del alumno
+        $stmtObs = $conn->prepare("SELECT * FROM OBSERVACIONES WHERE RUT_ALUMNO = ?");
+        $stmtObs->bind_param("s", $rutAlumno);
+        $stmtObs->execute();
+        $resultadoObs = $stmtObs->get_result();
+
+        if ($resultadoObs->num_rows > 0) {
+            while ($filaObs = $resultadoObs->fetch_assoc()) {
+                $observaciones[] = $filaObs;
+            }
+        }
+        $stmtObs->close();
     } else {
-        // Alumno no encontrado
         $mensaje = "Alumno no encontrado.";
     }
     $stmt->close();
 }
+
 
 // Verifica si se ha enviado el formulario de actualización
 if (isset($_POST['actualizar'])) {
@@ -89,20 +99,43 @@ if (isset($_POST['actualizar'])) {
     $stmt->close();
 }
 
+if (isset($_POST['agregar_observacion'])) {
+    $categoria = $_POST['categoria'];
+    $descripcion = $_POST['descripcion'];
+    $fecha = $_POST['fecha'];
+    // Asegúrate de usar la misma variable que usas para mostrar el RUT en el formulario
+    $rutAlumno = $_POST['rutAlumno']; 
+
+    // Asegúrate de que $rutAlumno esté definido y no sea nulo
+    if (isset($rutAlumno) && !empty($rutAlumno)) {
+        // Preparar la consulta SQL para insertar la observación
+        $stmt = $conn->prepare("INSERT INTO OBSERVACIONES (CATEGORIA, DESCRIPCION, FECHA, RUT_ALUMNO) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $categoria, $descripcion, $fecha, $rutAlumno); // Cambia "i" por "s" si RUT_ALUMNO es VARCHAR
+        $stmt->execute();
+        if ($stmt->affected_rows > 0) {
+            $mensaje = "Observación agregada con éxito.";
+        } else {
+            $mensaje = "Error al agregar la observación.";
+        }
+        $stmt->close();
+    } else {
+        $mensaje = "RUT del alumno no definido.";
+    }
+}
+
 ?>
 <?php if (!empty($mensaje)): ?>
     <div class="alert alert-success" role="alert">
         <?php echo $mensaje; ?>
     </div>
 <?php endif; ?>
-<form action="" method="post">
-                        <div class="form-group">
-                            <label for="rutAlumno">Rut del alumno:</label>
-                            <!-- Agrega el atributo 'name' al input y cambia el botón para que envíe el formulario -->
-                            <input type="text" class="form-control" id="rutAlumno" name="rutAlumno" placeholder="Ingrese RUT del alumno">
-                            <button type="submit" class="btn btn-primary custom-button mt-3" name="buscarAlumno">Buscar</button>
 
-                        </div>
+<form action="" method="post">
+    <div class="form-group">
+        <label for="rutAlumno">Rut del alumno:</label>
+        <input type="text" class="form-control" id="rutAlumno" name="rutAlumno" placeholder="Ingrese RUT del alumno" value="<?php echo htmlspecialchars($rutAlumno); ?>">
+        <button type="submit" class="btn btn-primary custom-button mt-3" name="buscarAlumno">Buscar</button>
+    </div>
 </form>
 
 
@@ -172,34 +205,37 @@ if (isset($_POST['actualizar'])) {
                 <button type="submit" class="btn btn-primary btn-block custom-button" name="actualizar">Actualizar</button>
             </form>
             <h2>Observaciones</h2>
-            <div class="table-responsive">
-<table class="table">
-    <thead>
-        <tr>
-            <th scope="col">Categoría</th>
-            <th scope="col">Descripción</th>
-            <th scope="col">Fecha</th>
-            <th scope="col">Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td>
-                <form action="" method="post" onsubmit="return confirmDelete();">
-                    <input type="hidden" name="id_observacion" value="">
-                    <button type="submit" name="eliminar_observacion" class="btn btn-danger">Eliminar</button>
-                </form>
-            </td>
-        </tr>
-    </tbody>
-</table>
-        </div>
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">Categoría</th>
+                <th scope="col">Descripción</th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($observaciones as $obs): ?>
+                <tr>
+                    <td><?php echo htmlspecialchars($obs['CATEGORIA']); ?></td>
+                    <td><?php echo htmlspecialchars($obs['DESCRIPCION']); ?></td>
+                    <td><?php echo htmlspecialchars($obs['FECHA']); ?></td>
+                    <td>
+                        <form action="" method="post" onsubmit="return confirmDelete();">
+                            <input type="hidden" name="id_observacion" value="<?php echo $obs['ID']; ?>">
+                            <button type="submit" name="eliminar_observacion" class="btn btn-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
 
 
 <form action="" method="post">
+    <input type="hidden" name="rutAlumno" value="<?php echo htmlspecialchars($rutAlumno); ?>">
     <div class="form-group">
         <label>Categoría:</label>
         <input type="text" class="form-control" name="categoria" required>
