@@ -20,6 +20,7 @@ if (isset($_POST['buscarAlumno'])) {
 
     // Consulta a la base de datos
     $stmt = $conn->prepare("SELECT 
+                                a.ID_ALUMNO,
                                 a.RUT_ALUMNO,
                                 ap.NOMBRE,
                                 ap.AP_PATERNO,
@@ -46,6 +47,45 @@ if (isset($_POST['buscarAlumno'])) {
         $mensaje = "No se encontró ningún alumno con ese RUT.";
     }
     $stmt->close();
+}
+
+
+if (isset($_POST['actualizar_datos'])) {
+    // Recoge los datos del formulario
+    $rut = $_POST['rut'];
+    $parentesco = $_POST['parentesco'];
+    $nombre = $_POST['nombre'];
+    $apellidoPaterno = $_POST['apellidoPaterno'];
+    $apellidoMaterno = $_POST['apellidoMaterno'];
+    $fechaNac = $_POST['fecha_nac'];
+    $calle = $_POST['calle'];
+    $nCalle = $_POST['n_calle'];
+    $obsDireccion = $_POST['obsDireccion'];
+    $villaPoblacion = $_POST['villaPoblacion'];
+    $comuna = $_POST['comuna'];
+    $idRegion = $_POST['idRegion'];
+    $telefonoParticular = $_POST['telefonoParticular'];
+    $correoElectronicoPersonal = $_POST['correoElectronicoPersonal'];
+    $correoElectronicoTrabajo = $_POST['correoElectronicoTrabajo'];
+    $tutorAcademico = isset($_POST['tutorAcademico']) ? 1 : 0;
+
+    // Inserta o actualiza los datos en la tabla APODERADO
+    // Aquí debes manejar la lógica para determinar si debes insertar un nuevo registro
+    // o actualizar uno existente. Este es un ejemplo de inserción:
+    $stmt = $conn->prepare("INSERT INTO APODERADO (RUT_APODERADO, PARENTESCO, NOMBRE, AP_PATERNO, AP_MATERNO, FECHA_NAC, CALLE, NRO_CALLE, OBS_DIRECCION, VILLA, ID_COMUNA, ID_REGION, FONO_PART, MAIL_PART, MAIL_LAB, TUTOR_ACADEMICO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sssssssssssssssi", $rut, $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $comuna, $idRegion, $telefonoParticular, $correoElectronicoPersonal, $correoElectronicoTrabajo, $tutorAcademico);
+    $stmt->execute();
+
+    // Luego, obtén el ID del apoderado insertado
+    $idApoderado = $conn->insert_id;
+
+    // Inserta los datos en la tabla REL_ALUM_APOD
+    $tipoRelacion = $parentesco == 'MADRE' ? 2 : ($parentesco == 'PADRE' ? 1 : 0); // Ejemplo de asignación de tipo de relación
+    $stmtRel = $conn->prepare("INSERT INTO REL_ALUM_APOD (ID_ALUMNO, ID_APODERADO, STATUS, DELETE_FLAG, TIPO_RELACION) VALUES ((SELECT ID_ALUMNO FROM ALUMNO WHERE RUT_ALUMNO = ?), ?, 1, 0, ?)");
+    $stmtRel->bind_param("sii", $rutAlumno, $idApoderado, $tipoRelacion);
+    $stmtRel->execute();
+
+    // Código para manejar mensajes de éxito o error...
 }
 
 ?>
@@ -93,10 +133,10 @@ if (isset($_POST['buscarAlumno'])) {
     </form>
     
     <h3>Información de padres/apoderados</h3>
-    <form method="POST" action="padres_apoderados.php">
+    <form method="post">
         <div class="form-group">
             <label for="rut">RUT</label>
-            <input type="text" class="form-control" name="rut" id="rut" maxlength="9">
+            <input type="text" class="form-control" name="rut" id="rut" maxlength="10">
         </div>
         <div class="form-group">
             <label for="parentesco">Parentesco</label>
@@ -115,6 +155,10 @@ if (isset($_POST['buscarAlumno'])) {
             <input type="text" class="form-control" name="apellidoMaterno">
         </div>
         <div class="form-group">
+            <label>Fecha de Nacimiento:</label>
+            <input type="text" class="form-control" name="fecha_nac">
+        </div>
+        <div class="form-group">
             <label for="calle">Calle</label>
             <input type="text" class="form-control" name="calle">
         </div>
@@ -124,7 +168,7 @@ if (isset($_POST['buscarAlumno'])) {
         </div>
         <div class="form-group">
             <label for="restoDireccion">Resto Dirección</label>
-            <input type="text" class="form-control" name="restoDireccion">
+            <input type="text" class="form-control" name="obsDireccion">
         </div>
         <div class="form-group">
             <label for="villaPoblacion">Villa/Población</label>
@@ -135,16 +179,12 @@ if (isset($_POST['buscarAlumno'])) {
             <input type="text" class="form-control" name="comuna">
         </div>
         <div class="form-group">
-            <label for="ciudad">Ciudad</label>
-            <input type="text" class="form-control" name="ciudad">
+            <label for="ciudad">Region</label>
+            <input type="text" class="form-control" name="idRegion">
         </div>
         <div class="form-group">
             <label for="telefonoParticular">Teléfono Particular</label>
             <input type="tel" class="form-control" name="telefonoParticular">
-        </div>
-        <div class="form-group">
-            <label for="telefonoTrabajo">Teléfono Trabajo</label>
-            <input type="tel" class="form-control" name="telefonoTrabajo">
         </div>
         <div class="form-group">
             <label for="correoElectronicoPersonal">Correo Electrónico Personal</label>
