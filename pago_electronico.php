@@ -216,6 +216,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var totalPagarElement = document.querySelector('.total-pagar strong');
     var resumenValoresTableBody = document.querySelector('#resumenValores tbody');
     var rutAlumnoInput = document.getElementById('rutAlumno');
+    var payWithTransferButton = document.getElementById('payWithTransfer');
+    var transferPaymentForm = document.getElementById('transferPaymentForm');
 
     // Ordenar los checkboxes por fecha de vencimiento de forma ascendente
     checkboxes.sort(function(a, b) {
@@ -271,6 +273,17 @@ document.addEventListener('DOMContentLoaded', function () {
         // Actualizar el total a pagar y el resumen de la tabla
         totalPagarElement.textContent = 'Total a pagar $' + totalPagar.toFixed(2);
         resumenValoresTableBody.innerHTML = resumenHtml;
+    });
+
+    payWithTransferButton.addEventListener('click', function() {
+        // Tomar el monto total a pagar del elemento de texto
+        var totalAmount = totalPagarElement.textContent.replace('Total a pagar $', '').trim();
+
+        // Asignar el monto total al input del formulario de Khipu
+        document.getElementById('transferAmountToPay').value = totalAmount;
+
+        // Enviar el formulario de Khipu
+        transferPaymentForm.submit();
     });
 });
 

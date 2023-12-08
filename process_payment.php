@@ -21,7 +21,7 @@ $request = [
         ],
     ],
     'expiration' => date('c', strtotime('+2 days')),
-    'returnUrl' => 'http://localhost:8000/response.php?reference=' . $reference,
+    'returnUrl' => 'https://sistemaescolardesarrollo.oralisisdataservice.cl/response.php?reference=' . $reference,
     'ipAddress' => $_SERVER['REMOTE_ADDR'],
     'userAgent' => $_SERVER['HTTP_USER_AGENT'],
 ];

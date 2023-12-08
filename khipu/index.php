@@ -27,9 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['amount'])) {
         $opts = array(
             "expires_date" => $exp->format(DateTime::ATOM), // Formato correcto para la fecha de expiración
             "body" => "Descripción del cuerpo del pago",
-            "return_url" => "https://sistemaescolar.oralisisdataservice.cl/khipu/retorno.php?token=" . $_SESSION['payment_token'],
-            "cancel_url" => "https://sistemaescolar.oralisisdataservice.cl/khipu/cancelado.php",
-            "notify_url" => "https://sistemaescolar.oralisisdataservice.cl/khipu/notificacion.php"
+            "return_url" => "https://sistemaescolardesarrollo.oralisisdataservice.cl/khipu/retorno.php?token=" . $_SESSION['payment_token'],
+            "cancel_url" => "https://sistemaescolardesarrollo.oralisisdataservice.cl/khipu/cancelado.php",
+            "notify_url" => "https://sistemaescolardesarrollo.oralisisdataservice.cl/khipu/notificacion.php"
         );
         $response = $payments->paymentsPost("Pago de cuotas", "CLP", $monto, $opts);
 
