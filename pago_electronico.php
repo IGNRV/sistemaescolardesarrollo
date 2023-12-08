@@ -91,12 +91,14 @@ if (isset($_POST['buscarAlumno'])) {
 <div class="pago-electronico container my-4">
     <h2 class="mb-4">Pago electrónico de cuotas</h2>
     <form method="post">
-        <div class="form-group">
-            <label for="rutAlumno">Rut del alumno:</label>
-            <input type="text" class="form-control" id="rutAlumno" name="rutAlumno" placeholder="Ingrese RUT del alumno">
-            <button type="submit" class="btn btn-primary mt-3" name="buscarAlumno">Buscar</button>
-        </div>
-    </form>
+    <div class="form-group">
+        <label for="rutAlumno">Rut del alumno:</label>
+        <!-- Asegúrate de que el valor se mantenga después de enviar el formulario -->
+        <input type="text" class="form-control" id="rutAlumno" name="rutAlumno" placeholder="Ingrese RUT del alumno" value="<?php echo isset($rutAlumno) ? htmlspecialchars($rutAlumno) : ''; ?>">
+        <button type="submit" class="btn btn-primary mt-3" name="buscarAlumno">Buscar</button>
+    </div>
+</form>
+
 
     <?php if (!empty($mensaje)): ?>
         <div class="alert alert-info"><?php echo $mensaje; ?></div>
@@ -189,7 +191,6 @@ if (isset($_POST['buscarAlumno'])) {
 
     <div class="total-pagar mt-3">
         <strong>Total a pagar $</strong>
-        <!-- Aquí se mostrará el total a pagar calculado -->
     </div>
 
     <div class="metodos-pago mt-3">
@@ -209,37 +210,80 @@ if (isset($_POST['buscarAlumno'])) {
 </form>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="seleccionarPago[]"]'));
+document.addEventListener('DOMContentLoaded', function () {
+    var checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="seleccionarPago[]"]'));
+    var btnSeleccionarValores = document.getElementById('btnSeleccionarValores');
+    var totalPagarElement = document.querySelector('.total-pagar strong');
+    var resumenValoresTableBody = document.querySelector('#resumenValores tbody');
 
-        // Ordenar los checkboxes por fecha de vencimiento de forma ascendente
-        checkboxes.sort(function(a, b) {
-            var dateA = new Date(a.dataset.fechaVencimiento), dateB = new Date(b.dataset.fechaVencimiento);
-            return dateA - dateB;
+    // Ordenar los checkboxes por fecha de vencimiento de forma ascendente
+    checkboxes.sort(function(a, b) {
+        var dateA = new Date(a.dataset.fechaVencimiento), dateB = new Date(b.dataset.fechaVencimiento);
+        return dateA - dateB;
+    });
+
+    checkboxes.forEach(function(checkbox, index) {
+        // Deshabilitar todos los checkboxes excepto el primero
+        if(index > 0) checkbox.disabled = true;
+
+        checkbox.addEventListener('change', function(event) {
+            handleCheckboxChange(event.target, index, checkboxes);
         });
+    });
 
-        checkboxes.forEach(function(checkbox, index) {
-            // Deshabilitar todos los checkboxes excepto el primero
-            if(index > 0) checkbox.disabled = true;
-
-            checkbox.addEventListener('change', function(event) {
-                handleCheckboxChange(event.target, index, checkboxes);
-            });
-        });
-
-        function handleCheckboxChange(changedCheckbox, changedIndex, allCheckboxes) {
-            // Si se desmarca una casilla, también desmarca todas las casillas posteriores
-            if (!changedCheckbox.checked) {
-                for (var i = changedIndex + 1; i < allCheckboxes.length; i++) {
-                    allCheckboxes[i].checked = false;
-                    allCheckboxes[i].disabled = true;
-                }
-            } else {
-                // Si se marca una casilla, habilita la siguiente casilla
-                if (changedIndex + 1 < allCheckboxes.length) {
-                    allCheckboxes[changedIndex + 1].disabled = false;
-                }
+    function handleCheckboxChange(changedCheckbox, changedIndex, allCheckboxes) {
+        // Si se desmarca una casilla, también desmarca todas las casillas posteriores
+        if (!changedCheckbox.checked) {
+            for (var i = changedIndex + 1; i < allCheckboxes.length; i++) {
+                allCheckboxes[i].checked = false;
+                allCheckboxes[i].disabled = true;
+            }
+        } else {
+            // Si se marca una casilla, habilita la siguiente casilla
+            if (changedIndex + 1 < allCheckboxes.length) {
+                allCheckboxes[changedIndex + 1].disabled = false;
             }
         }
+    }
+
+    btnSeleccionarValores.addEventListener('click', function() {
+        var totalPagar = 0;
+        var resumenHtml = '';
+
+        checkboxes.forEach(function(checkbox) {
+            if (checkbox.checked) {
+                var tr = checkbox.closest('tr');
+                var valorArancel = tr.cells[2].textContent;
+                totalPagar += parseFloat(valorArancel);
+
+                // Agregar fila al resumen de valores a pagar
+                resumenHtml += '<tr>' +
+                    '<td>' + tr.cells[0].textContent + '</td>' +
+                    '<td>' + tr.cells[1].textContent + '</td>' +
+                    '<td>' + tr.cells[3].textContent + '</td>' +
+                    '<td>' + valorArancel + '</td>' +
+                    '<td><button type="button" class="btn btn-danger btn-sm" onclick="removePayment(this)">Eliminar</button></td>' +
+                    '</tr>';
+            }
+        });
+
+        // Actualizar el total a pagar y el resumen de la tabla
+        totalPagarElement.textContent = 'Total a pagar $' + totalPagar.toFixed(2);
+        resumenValoresTableBody.innerHTML = resumenHtml;
     });
+});
+
+function removePayment(button) {
+    var tr = button.closest('tr');
+    var valorArancel = tr.cells[3].textContent;
+    var totalPagarElement = document.querySelector('.total-pagar strong');
+    var totalPagar = parseFloat(totalPagarElement.textContent.replace('Total a pagar $', ''));
+
+    // Restar el monto y actualizar el total
+    totalPagar -= parseFloat(valorArancel);
+    totalPagarElement.textContent = 'Total a pagar $' + totalPagar.toFixed(2);
+
+    // Remover la fila del resumen
+    tr.remove();
+}
 </script>
