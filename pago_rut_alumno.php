@@ -1,3 +1,69 @@
+<?php
+require_once 'db.php'; // Asegúrate de que este es el camino correcto hacia tu archivo db.php
+
+$saldoPeriodoAnterior = [];
+$cuotasPeriodoActual = [];
+$mensaje = '';
+
+if (isset($_POST['btnBuscarAlumno'])) {
+    $rutAlumno = $_POST['rutAlumno'];
+    $yearActual = date('Y');
+
+    // Consulta a la base de datos
+    $stmt = $conn->prepare("SELECT 
+                                hp.ID_PAGO,
+                                hp.ID_ALUMNO,
+                                a.RUT_ALUMNO,
+                                hp.CODIGO_PRODUCTO,
+                                hp.FOLIO_PAGO,
+                                hp.VALOR_ARANCEL,
+                                hp.DESCUENTO_BECA,
+                                hp.OTROS_DESCUENTOS,
+                                hp.VALOR_A_PAGAR,
+                                hp.FECHA_PAGO,
+                                hp.MEDIO_PAGO,
+                                hp.NRO_MEDIOPAGO,
+                                hp.FECHA_SUSCRIPCION,
+                                hp.BANCO_EMISOR,
+                                hp.TIPO_MEDIOPAGO,
+                                hp.ESTADO_PAGO,
+                                hp.TIPO_DOCUMENTO,
+                                hp.NUMERO_DOCUMENTO,
+                                hp.FECHA_VENCIMIENTO,
+                                hp.FECHA_INGRESO,
+                                hp.FECHA_EMISION,
+                                hp.FECHA_COBRO,
+                                hp.ID_PERIODO_ESCOLAR
+                            FROM
+                                c1occsyspay.HISTORIAL_PAGOS AS hp
+                                    LEFT JOIN
+                                ALUMNO AS a ON a.ID_ALUMNO = hp.ID_ALUMNO
+                            WHERE
+                                a.RUT_ALUMNO = ?");
+    $stmt->bind_param("s", $rutAlumno);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
+
+    if ($resultado->num_rows > 0) {
+        while ($fila = $resultado->fetch_assoc()) {
+            $fechaVencimiento = new DateTime($fila['FECHA_VENCIMIENTO']);
+            $yearVencimiento = $fechaVencimiento->format('Y');
+            
+            if ($yearVencimiento < $yearActual) {
+                // Agregar a saldo del período anterior
+                $saldoPeriodoAnterior[] = $fila;
+            } else {
+                // Agregar a cuotas del período actual
+                $cuotasPeriodoActual[] = $fila;
+            }
+        }
+        $mensaje = "Datos encontrados.";
+    } else {
+        $mensaje = "No se encontraron datos para el RUT ingresado.";
+    }
+    $stmt->close();
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -9,7 +75,9 @@
     
 </head>
 <body>
-
+<?php if (!empty($mensaje)): ?>
+    <div class="alert alert-info"><?php echo $mensaje; ?></div>
+<?php endif; ?>
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
@@ -19,12 +87,12 @@
                 </div>
                 <div class="card-body">
                     <!-- Formulario de pago -->
-                    <form>
+                    <form method="post"> <!-- Agrega el método POST y la acción al formulario -->
                         <!-- Campo RUT del alumno -->
                         <div class="form-group">
                             <label for="rutAlumno">Rut del alumno:</label>
-                            <input type="text" class="form-control" id="rutAlumno" placeholder="Ingrese RUT del alumno">
-                            <button type="button" class="btn btn-primary custom-button mt-3" id="btnBuscarAlumno">Buscar</button>
+                            <input type="text" class="form-control" id="rutAlumno" name="rutAlumno" placeholder="Ingrese RUT del alumno" required>
+                            <button type="submit" class="btn btn-primary custom-button mt-3" id="btnBuscarAlumno" name="btnBuscarAlumno">Buscar</button>
                         </div>
                         
                         <!-- Campo RUT del padre/poderado -->
@@ -48,14 +116,25 @@
                                         <th>N° Cuota</th>
                                         <th>Fecha Vencimiento</th>
                                         <th>Monto</th>
-                              <!--           <th>Medio de Pago</th>
-                                        <th>Fecha de Pago</th> -->
+                                        <th>Medio de Pago</th>
+                                        <th>Fecha de Pago</th>
                                         <th>Estado</th>
                                         <th>Seleccione Valor a Pagar</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Aquí irán las filas con la información de los pagos -->
+                                    <?php foreach ($saldoPeriodoAnterior as $index => $pago): ?>
+                                        <tr>
+                                            <td><?php echo $index + 1; ?></td>
+                                            <td><?php echo htmlspecialchars($pago['FECHA_VENCIMIENTO']); ?></td>
+                                            <td><?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?></td>
+                                            <td><?php echo htmlspecialchars($pago['MEDIO_PAGO']); ?></td>
+                                            <td><?php echo htmlspecialchars($pago['FECHA_PAGO']); ?></td>
+                                            <td><?php echo htmlspecialchars($pago['ESTADO_PAGO']); ?></td>
+                                            <td><input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>"></td>
+
+                                        </tr>
+                                    <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -69,15 +148,26 @@
                                         <th>N° Cuota</th>
                                         <th>Fecha Vencimiento</th>
                                         <th>Monto</th>
-                                    <!--     <th>Medio de Pago</th>
-                                        <th>Fecha de Pago</th> -->
+                                        <th>Medio de Pago</th>
+                                        <th>Fecha de Pago</th>
                                         <th>Estado</th>
                                         <th>Seleccione Valor a Pagar</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Aquí irán las filas con la información de las cuotas del periodo actual -->
-                                </tbody>
+            <?php foreach ($cuotasPeriodoActual as $index => $pago): ?>
+                <tr>
+                    <td><?php echo $index + 1; ?></td>
+                    <td><?php echo htmlspecialchars($pago['FECHA_VENCIMIENTO']); ?></td>
+                    <td><?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?></td>
+                    <td><?php echo htmlspecialchars($pago['MEDIO_PAGO']); ?></td>
+                    <td><?php echo htmlspecialchars($pago['FECHA_PAGO']); ?></td>
+                    <td><?php echo htmlspecialchars($pago['ESTADO_PAGO']); ?></td>
+                    <td><input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>"></td>
+
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
                             </table>
                         </div>
 
@@ -195,325 +285,67 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 <!-- ... Resto del HTML anterior ... -->
-
 <script>
-    document.getElementById('btnRegistrarPago').addEventListener('click', function() {
-    var montoEfectivo = parseFloat(document.getElementById('montoEfectivo').value) || 0;
-    var montoCheque = parseFloat(document.getElementById('montoCheque').value) || 0;
-    var montoPos = parseFloat(document.getElementById('montoPos').value) || 0;
+    document.addEventListener('DOMContentLoaded', function () {
+    var checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="seleccionarPago[]"]'));
+    var btnSeleccionarValores = document.getElementById('btnSeleccionarValores');
+    var totalPagarElement = document.querySelector('.total-pagar strong');
+    var resumenValoresTableBody = document.querySelector('#resumenValores tbody');
+    var rutAlumnoInput = document.getElementById('rutAlumno');
+    var payWithTransferButton = document.getElementById('payWithTransfer');
+    var transferPaymentForm = document.getElementById('transferPaymentForm');
 
-    var totalMontoIngresado = montoEfectivo + montoCheque + montoPos; // + otros montos si existen
-    var totalAPagarTexto = document.getElementById('totalAPagar').textContent;
-    var totalAPagar = parseFloat(totalAPagarTexto.split('$')[1]) || 0;
-
-    if (totalMontoIngresado !== totalAPagar) {
-        alert('La suma de los montos ingresados no es igual al total a pagar.');
-        return;
-    }
-
-    // Recolectar los datos de los métodos de pago
-    var idsCuotasSeleccionadas = Array.from(document.querySelectorAll('.cuota-checkbox:checked')).map(function(checkbox) {
-        return checkbox.getAttribute('data-id-cuota');
+    // Ordenar los checkboxes por fecha de vencimiento de forma ascendente
+    checkboxes.sort(function(a, b) {
+        var dateA = new Date(a.dataset.fechaVencimiento), dateB = new Date(b.dataset.fechaVencimiento);
+        return dateA - dateB;
     });
 
-    var datosPago = {
-        tipoDocumento: document.getElementById('tipoDocumento').value,
-        montoEfectivo: montoEfectivo,
-        fechaPagoEfectivo: document.getElementById('fechaPagoEfectivo').value,
-        montoCheque: montoCheque, // Incluir monto y detalles del cheque
-        tipoDocumentoCheque: document.getElementById('tipoDocumentoCheque').value,
-        numeroDocumentoCheque: document.getElementById('numeroDocumentoCheque').value,
-        fechaEmisionCheque: document.getElementById('fechaEmisionCheque').value,
-        bancoCheque: document.getElementById('bancoCheque').value,
-        fechaDepositoCheque: document.getElementById('fechaDepositoCheque').value,
-        rutAlumno: document.getElementById('rutAlumno').value,
-        idsCuotasSeleccionadas: idsCuotasSeleccionadas
-    };
-
-    // Código para enviar datosPago al servidor...
-});
-
-document.getElementById('btnBuscarAlumno').addEventListener('click', function() {
-    var rutAlumno = document.getElementById('rutAlumno').value;
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'busca_alumno.php', true);
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.onload = function() {
-        if (this.status == 200) {
-            var response = JSON.parse(this.responseText);
-            if(response.encontrado){
-                actualizarTabla(response.datosAnterior, 'tablaSaldoPeriodoAnterior');
-                actualizarTabla(response.datosActual, 'tablaCuotasPeriodoActual');
-                actualizarEstadosDeCuotasVencidas(rutAlumno); // Nueva función para actualizar el estado
-            } else {
-                alert('Rut no encontrado');
-            }
-        }
-    };
-    xhr.send('rut=' + rutAlumno);
-});
-
-// Nueva función para actualizar los estados de las cuotas vencidas
-function actualizarEstadosDeCuotasVencidas(rutAlumno) {
-    var xhrActualizar = new XMLHttpRequest();
-    xhrActualizar.open('POST', 'actualizar_cuotas_vencidas.php', true);
-    xhrActualizar.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhrActualizar.onload = function() {
-        if (this.status == 200) {
-            console.log("Cuotas actualizadas: " + this.responseText);
-        }
-    };
-    xhrActualizar.send('rut=' + rutAlumno);
-}
-
-function actualizarTabla(datos, idTabla) {
-    var tbody = document.getElementById(idTabla).getElementsByTagName('tbody')[0];
-    tbody.innerHTML = ''; // Limpiar la tabla actual
-
-    // Ordenar los datos por fecha de vencimiento
-    datos.sort((a, b) => new Date(a.fecha_cuota_deuda) - new Date(b.fecha_cuota_deuda));
-
-    var checkboxAnteriorHabilitado = true; // Indica si el checkbox anterior está habilitado
-
-    datos.forEach(function(cuota, index) {
-        var row = tbody.insertRow();
-        row.insertCell(0).innerHTML = index + 1; // N° Cuota
-        row.insertCell(1).innerHTML = cuota.fecha_cuota_deuda; // Fecha Vencimiento
-        row.insertCell(2).innerHTML = cuota.monto; // Monto
-        row.insertCell(3).innerHTML = ''; // Medio de Pago
-        row.insertCell(4).innerHTML = ''; // Fecha de Pago
-        var estado = cuota.estado_cuota === '0' ? 'VIGENTE' : (cuota.estado_cuota === '1' ? 'VENCIDA' : 'PAGADA');
-        row.insertCell(5).innerHTML = estado; // Estado
-
-        var cellCheck = row.insertCell(6); // Celda para el checkbox
-        var checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.classList.add('cuota-checkbox');
-        checkbox.setAttribute('data-id-cuota', cuota.id); // Agregar el ID de la cuota
-        checkbox.value = cuota.monto;
-
-        // Habilitar solo el primer checkbox no pagado y los siguientes en función del anterior
-        checkbox.disabled = !checkboxAnteriorHabilitado || cuota.estado_cuota === '2';
-        if (cuota.estado_cuota !== '2') {
-            checkboxAnteriorHabilitado = false;
-        }
-        
-        cellCheck.appendChild(checkbox);
-    });
-
-    // Añadir evento para habilitar el siguiente checkbox
-    var checkboxes = document.querySelectorAll('.cuota-checkbox');
     checkboxes.forEach(function(checkbox, index) {
-        checkbox.addEventListener('change', function() {
-            if (index < checkboxes.length - 1) {
-                checkboxes[index + 1].disabled = !checkbox.checked;
-            }
+        // Deshabilitar todos los checkboxes excepto el primero
+        if(index > 0) checkbox.disabled = true;
+
+        checkbox.addEventListener('change', function(event) {
+            handleCheckboxChange(event.target, index, checkboxes);
         });
     });
-}
 
-document.getElementById('btnSeleccionarValores').addEventListener('click', function() {
-    var checkboxes = document.querySelectorAll('.cuota-checkbox:checked');
-    var total = 0;
-    checkboxes.forEach(function(checkbox) {
-        total += parseFloat(checkbox.value);
-    });
-    document.getElementById('totalAPagar').textContent = 'Total a Pagar $ ' + total.toFixed(2);
-});
-
-function togglePaymentSections() {
-    var efectivoChecked = document.getElementById('efectivo').checked;
-    var pagoPosChecked = document.getElementById('pagoPos').checked;
-    var chequeChecked = document.getElementById('cheque').checked;
-
-    document.getElementById('seccionEfectivo').style.display = efectivoChecked ? 'block' : 'none';
-    document.getElementById('seccionPagoPos').style.display = pagoPosChecked ? 'block' : 'none';
-    document.getElementById('seccionCheque').style.display = chequeChecked ? 'block' : 'none';
-}
-
-var metodosPago = document.querySelectorAll('input[name="metodoPago"]');
-metodosPago.forEach(function(metodo) {
-    metodo.addEventListener('change', togglePaymentSections);
-});
-
-var metodosPago = document.querySelectorAll('input[name="metodoPago"]');
-metodosPago.forEach(function(metodo) {
-    metodo.addEventListener('change', togglePaymentSections);
-});
-
-let rutAlumnoGlobal = '';
-
-// Manejador del evento click para el botón REGISTRAR PAGO
-document.querySelector('.btn-primary.btn-block.mt-4').addEventListener('click', function() {
-    var montoEfectivo = parseFloat(document.getElementById('montoEfectivo').value) || 0;
-    var montoCheque = parseFloat(document.getElementById('montoCheque').value) || 0;
-    var montoPos = parseFloat(document.getElementById('montoPos').value) || 0;
-    var rutPadre = document.getElementById('rutPadre').value; // Añadir esta línea para obtener el RUT del apoderado
-    var rutAlumno = rutAlumnoGlobal || document.getElementById('rutAlumno').value;
-
-
-
-    var totalMontoIngresado = montoEfectivo + montoCheque + montoPos;
-    var totalAPagarTexto = document.getElementById('totalAPagar').textContent;
-    var totalAPagar = parseFloat(totalAPagarTexto.split('$')[1]) || 0;
-
-    if (totalMontoIngresado !== totalAPagar) {
-        alert('La suma de los montos ingresados no es igual al total a pagar.');
-        return;
-    }
-
-    // Recolectar los datos de los métodos de pago
-    var idsCuotasSeleccionadas = Array.from(document.querySelectorAll('.cuota-checkbox:checked')).map(function(checkbox) {
-        return checkbox.getAttribute('data-id-cuota');
-    });
-
-    var datosPago = {
-        tipoDocumento: document.getElementById('tipoDocumento').value,
-        montoEfectivo: montoEfectivo,
-        fechaPagoEfectivo: document.getElementById('fechaPagoEfectivo').value,
-        rutAlumno: document.getElementById('rutAlumno').value,
-        idsCuotasSeleccionadas: idsCuotasSeleccionadas,
-        rutPadre: document.getElementById('rutPadre').value,
-        rutAlumno: rutAlumno,
-    };
-
-    // Añadir lógica para el pago con cheque
-    if (document.getElementById('cheque').checked) {
-        datosPago.tipoDocumentoCheque = document.getElementById('tipoDocumentoCheque').value;
-        datosPago.numeroDocumentoCheque = document.getElementById('numeroDocumentoCheque').value;
-        datosPago.fechaEmisionCheque = document.getElementById('fechaEmisionCheque').value;
-        datosPago.bancoCheque = document.getElementById('bancoCheque').value; // Se recoge el valor del banco
-        datosPago.montoCheque = montoCheque;
-        datosPago.fechaDepositoCheque = document.getElementById('fechaDepositoCheque').value;
-    }
-
-    if (document.getElementById('pagoPos').checked) {
-        datosPago.tipoDocumentoPos = document.getElementById('tipoDocumentoPos').value;
-        datosPago.montoPos = parseFloat(document.getElementById('montoPos').value) || 0;
-        datosPago.fechaPagoPos = document.getElementById('fechaPagoPos').value;
-        datosPago.comprobantePos = document.getElementById('comprobantePos').value;
-        datosPago.tipoTarjetaPos = document.getElementById('tipoTarjetaPos').value;
-        datosPago.cuotasPos = parseInt(document.getElementById('cuotasPos').value) || 0; // Aquí se añade el número de cuotas
-
-    }
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'registrar_pago.php', true);
-    xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
-    xhr.onload = function() {
-        if (this.status == 200) {
-            alert("Respuesta del servidor: " + this.responseText);
-            window.location.reload();
-        } else {
-            alert("Error al procesar el pago.");
-        }
-    };
-    xhr.send(JSON.stringify(datosPago));
-});
-
-// Asumiendo que el resto del código se mantiene sin cambios...
-
-document.getElementById('btnBuscarApoderado').addEventListener('click', function() {
-    var rutPadre = document.getElementById('rutPadre').value.trim();
-    if(rutPadre === '') {
-        alert('Por favor, ingrese un RUT.');
-        return;
-    }
-
-    // Ocultar las tablas de periodos anteriores y actuales antes de la búsqueda
-    var tablasPeriodos = document.querySelectorAll('.table-responsive');
-    tablasPeriodos.forEach(function(tabla) {
-        tabla.style.display = 'none';
-    });
-
-
-    // Limpiamos el contenedor antes de cargar nuevos datos
-    var contenedorDatosAlumnos = document.getElementById('datosAlumnos');
-    contenedorDatosAlumnos.innerHTML = '';
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'busca_padres_apoderados.php', true);
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.onload = function () {
-        if (this.status == 200) {
-            var respuesta = JSON.parse(this.responseText);
-            if (respuesta.encontrado) {
-                var primerIdAlumno = Object.keys(respuesta.datos)[0];
-                var primerAño = Object.keys(respuesta.datos[primerIdAlumno])[0];
-                rutAlumnoGlobal = respuesta.datos[primerIdAlumno][primerAño][0].rut_alumno;
-                Object.keys(respuesta.datos).forEach(function(idAlumno) {
-                    // Para cada ID de alumno, creamos las tablas de saldos y cuotas solo una vez.
-                    Object.keys(respuesta.datos[idAlumno]).sort().forEach(function(año, index, array) {
-                        var datos = respuesta.datos[idAlumno][año];
-                        var tablaId = 'tabla_' + idAlumno + '_' + año;
-                        var esAnioActual = año == new Date().getFullYear();
-
-                        // Verificamos si ya se creó un contenedor para este alumno
-                        var contenedorAlumno = document.getElementById('contenedor_' + idAlumno);
-                        if (!contenedorAlumno) {
-                            contenedorAlumno = document.createElement('div');
-                            contenedorAlumno.id = 'contenedor_' + idAlumno;
-                            contenedorDatosAlumnos.appendChild(contenedorAlumno);
-                        }
-
-                        // Creamos y agregamos las tablas al contenedor correspondiente al alumno
-                        contenedorAlumno.innerHTML += `
-                        <h4>${esAnioActual ? 'Cuotas Periodo Actual' : 'Saldo Periodo Anterior'} para el alumno ID: ${idAlumno}</h4>
-                        <div class="table-responsive">
-                            <table class="table" id="${tablaId}">
-                                <thead>
-                                    <tr>
-                                        <th>N° Cuota</th>
-                                        <th>Fecha Vencimiento</th>
-                                        <th>Monto</th>
-                                        <th>Estado</th>
-                                        <th>Seleccione Valor a Pagar</th>
-                                    </tr>
-                                </thead>
-                                <tbody> ... </tbody>
-                            </table>
-                        </div>
-                    `;
-
-                        // Llamamos a actualizarTabla para llenar la tabla con los datos correspondientes
-                        actualizarTabla(datos, tablaId);
-                    });
-                });
-            } else {
-                alert('No se encontraron datos para el RUT ingresado.');
+    function handleCheckboxChange(changedCheckbox, changedIndex, allCheckboxes) {
+        // Si se desmarca una casilla, también desmarca todas las casillas posteriores
+        if (!changedCheckbox.checked) {
+            for (var i = changedIndex + 1; i < allCheckboxes.length; i++) {
+                allCheckboxes[i].checked = false;
+                allCheckboxes[i].disabled = true;
             }
         } else {
-            alert('Hubo un error al procesar la búsqueda.');
+            // Si se marca una casilla, habilita la siguiente casilla
+            if (changedIndex + 1 < allCheckboxes.length) {
+                allCheckboxes[changedIndex + 1].disabled = false;
+            }
         }
-    };
-    xhr.send('rutPadre=' + rutPadre);
-});
+    }
 
-
-function actualizarTabla(datos, idTabla) {
-    var tbody = document.getElementById(idTabla).querySelector('tbody');
-    tbody.innerHTML = ''; // Limpiar la tabla actual
-
-    datos.forEach(function(cuota, index) {
-        var row = tbody.insertRow();
-        row.insertCell(0).textContent = index + 1; // N° Cuota
-        row.insertCell(1).textContent = cuota.fecha_cuota_deuda; // Fecha Vencimiento
-        row.insertCell(2).textContent = cuota.monto; // Monto
-        var estado = cuota.estado_cuota === '0' ? 'VIGENTE' : (cuota.estado_cuota === '1' ? 'VENCIDA' : 'PAGADA');
-        row.insertCell(3).textContent = estado; // Estado
-        
-        var cellCheck = row.insertCell(4); // Celda para el checkbox
-        var checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.classList.add('cuota-checkbox');
-        checkbox.setAttribute('data-id-cuota', cuota.id);
-        checkbox.value = cuota.monto;
-        checkbox.disabled = cuota.estado_cuota === '2'; // Deshabilitar si la cuota está pagada
-        cellCheck.appendChild(checkbox);
+    document.getElementById('btnSeleccionarValores').addEventListener('click', function() {
+        var checkboxes = document.querySelectorAll('.seleccionarPago:checked');
+        var totalAPagar = 0;
+        checkboxes.forEach(function(checkbox) {
+            totalAPagar += parseFloat(checkbox.value);
+        });
+        document.getElementById('totalAPagar').textContent = 'Total a Pagar $' + totalAPagar.toFixed(2);
     });
-}
 
+    payWithTransferButton.addEventListener('click', function() {
+        // Tomar el monto total a pagar del elemento de texto
+        var totalAmount = totalPagarElement.textContent.replace('Total a pagar $', '').trim();
 
+        // Asignar el monto total al input del formulario de Khipu
+        document.getElementById('transferAmountToPay').value = totalAmount;
+
+        // Enviar el formulario de Khipu
+        transferPaymentForm.submit();
+    });
+});
 </script>
+
 </body>
 </html>
