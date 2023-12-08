@@ -215,6 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var btnSeleccionarValores = document.getElementById('btnSeleccionarValores');
     var totalPagarElement = document.querySelector('.total-pagar strong');
     var resumenValoresTableBody = document.querySelector('#resumenValores tbody');
+    var rutAlumnoInput = document.getElementById('rutAlumno');
 
     // Ordenar los checkboxes por fecha de vencimiento de forma ascendente
     checkboxes.sort(function(a, b) {
@@ -260,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 resumenHtml += '<tr>' +
                     '<td>' + tr.cells[0].textContent + '</td>' +
                     '<td>' + tr.cells[1].textContent + '</td>' +
-                    '<td>' + tr.cells[3].textContent + '</td>' +
+                    '<td>' + rutAlumnoInput.value + '</td>' + // Agrega el RUT del alumno
                     '<td>' + valorArancel + '</td>' +
                     '<td><button type="button" class="btn btn-danger btn-sm" onclick="removePayment(this)">Eliminar</button></td>' +
                     '</tr>';
