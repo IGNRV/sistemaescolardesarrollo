@@ -29,6 +29,9 @@ function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales,
         ? obtenerSiguienteNumeroDocumentoParaEfectivo($conn) 
         : ($tipoDocumento == 'POS' ? $adicionales['numeroComprobantePos'] : obtenerSiguienteNumeroDocumento($conn));
 
+    // Definir el medio de pago
+    $medioPago = ($tipoDocumento == 'POS') ? $adicionales['tipoDocumentoPos'] : $tipoDocumento;
+
     $stmt = $conn->prepare("INSERT INTO DETALLES_TRANSACCION (ANO, CODIGO_PRODUCTO, FOLIO_PAGO, VALOR, FECHA_PAGO, MEDIO_DE_PAGO, ESTADO, FECHA_VENCIMIENTO, TIPO_DOCUMENTO, NUMERO_DOCUMENTO, FECHA_EMISION, FECHA_COBRO, ID_PAGO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("sissssisssssi", $ano, $codigoProducto, $folioPago, $valor, $fechaPago, $medioPago, $estado, $fechaVencimiento, $tipoDocumento, $numeroDocumento, $fechaEmision, $fechaCobro, $idPago);
 
@@ -37,7 +40,7 @@ function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales,
     $folioPago = $pago['folioPago'];
     $valor = $monto;
     $fechaPago = $adicionales['fechaPago'];
-    $medioPago = $tipoDocumento;
+    $medioPago = $medioPago;
     $estado = 1;
     $fechaVencimiento = $pago['fechaVencimiento'];
     $tipoDocumento = $tipoDocumento;

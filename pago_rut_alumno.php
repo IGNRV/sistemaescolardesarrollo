@@ -406,6 +406,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var montoEfectivo = parseFloat(document.getElementById('montoEfectivo').value || 0);
         var montoPos = parseFloat(document.getElementById('montoPos').value || 0);
         var totalAPagar = parseFloat(document.getElementById('totalAPagar').textContent.replace('Total a Pagar $', ''));
+        var tipoTarjetaPos = document.getElementById('tipoTarjetaPos').value;
+
 
         if (montoEfectivo + montoPos !== totalAPagar) {
             alert('La suma de los montos no coincide con el total a pagar.');
@@ -425,13 +427,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Datos adicionales para los pagos
         var datosAdicionales = {
-            tipoDocumentoEfectivo: document.getElementById('tipoDocumento').value,
-            tipoDocumentoPos: document.getElementById('tipoDocumentoPos').value,
-            numeroComprobantePos: document.getElementById('comprobantePos').value, // Agregado
-            montoEfectivo: montoEfectivo,
-            montoPos: montoPos,
-            fechaPago: new Date().toISOString().split('T')[0]
-        };
+        tipoDocumentoEfectivo: document.getElementById('tipoDocumento').value,
+        tipoDocumentoPos: tipoTarjetaPos, // Modificación aquí
+        numeroComprobantePos: document.getElementById('comprobantePos').value,
+        montoEfectivo: montoEfectivo,
+        montoPos: montoPos,
+        fechaPago: new Date().toISOString().split('T')[0]
+    };
 
         // Envío de la información al servidor
         var xhr = new XMLHttpRequest();
