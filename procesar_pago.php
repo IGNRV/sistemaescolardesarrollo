@@ -29,11 +29,13 @@ function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales,
         ? obtenerSiguienteNumeroDocumentoParaEfectivo($conn) 
         : ($tipoDocumento == 'POS' ? $adicionales['numeroComprobantePos'] : obtenerSiguienteNumeroDocumento($conn));
 
-    // Definir el medio de pago
     $medioPago = ($tipoDocumento == 'POS') ? $adicionales['tipoDocumentoPos'] : $tipoDocumento;
+    
+    // Obtener el número de cuotas, si no hay valor, asignar 0
+    $nCuotas = ($tipoDocumento == 'POS' && !empty($adicionales['cuotasPos'])) ? $adicionales['cuotasPos'] : 0;
 
-    $stmt = $conn->prepare("INSERT INTO DETALLES_TRANSACCION (ANO, CODIGO_PRODUCTO, FOLIO_PAGO, VALOR, FECHA_PAGO, MEDIO_DE_PAGO, ESTADO, FECHA_VENCIMIENTO, TIPO_DOCUMENTO, NUMERO_DOCUMENTO, FECHA_EMISION, FECHA_COBRO, ID_PAGO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sissssisssssi", $ano, $codigoProducto, $folioPago, $valor, $fechaPago, $medioPago, $estado, $fechaVencimiento, $tipoDocumento, $numeroDocumento, $fechaEmision, $fechaCobro, $idPago);
+    $stmt = $conn->prepare("INSERT INTO DETALLES_TRANSACCION (ANO, CODIGO_PRODUCTO, FOLIO_PAGO, VALOR, FECHA_PAGO, MEDIO_DE_PAGO, N_CUOTAS, ESTADO, FECHA_VENCIMIENTO, TIPO_DOCUMENTO, NUMERO_DOCUMENTO, FECHA_EMISION, FECHA_COBRO, ID_PAGO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sissssissssssi", $ano, $codigoProducto, $folioPago, $valor, $fechaPago, $medioPago, $nCuotas, $estado, $fechaVencimiento, $tipoDocumento, $numeroDocumento, $fechaEmision, $fechaCobro, $idPago);
 
     $ano = date('Y');
     $codigoProducto = $pago['codigoProducto'];
@@ -41,6 +43,7 @@ function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales,
     $valor = $monto;
     $fechaPago = $adicionales['fechaPago'];
     $medioPago = $medioPago;
+    $nCuotas = $nCuotas;
     $estado = 1;
     $fechaVencimiento = $pago['fechaVencimiento'];
     $tipoDocumento = $tipoDocumento;

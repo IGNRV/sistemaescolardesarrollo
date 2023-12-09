@@ -407,6 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var montoPos = parseFloat(document.getElementById('montoPos').value || 0);
         var totalAPagar = parseFloat(document.getElementById('totalAPagar').textContent.replace('Total a Pagar $', ''));
         var tipoTarjetaPos = document.getElementById('tipoTarjetaPos').value;
+        var cuotasPos = document.getElementById('cuotasPos').value; 
 
 
         if (montoEfectivo + montoPos !== totalAPagar) {
@@ -432,7 +433,9 @@ document.addEventListener('DOMContentLoaded', function() {
         numeroComprobantePos: document.getElementById('comprobantePos').value,
         montoEfectivo: montoEfectivo,
         montoPos: montoPos,
-        fechaPago: new Date().toISOString().split('T')[0]
+        fechaPago: new Date().toISOString().split('T')[0],
+        cuotasPos: cuotasPos // Incluir el número de cuotas en los datos adicionales
+
     };
 
         // Envío de la información al servidor
