@@ -405,12 +405,16 @@ document.addEventListener('DOMContentLoaded', function() {
     btnRegistrarPago.addEventListener('click', function() {
         var montoEfectivo = parseFloat(document.getElementById('montoEfectivo').value || 0);
         var montoPos = parseFloat(document.getElementById('montoPos').value || 0);
+        var montoCheque = parseFloat(document.getElementById('montoCheque').value || 0);
         var totalAPagar = parseFloat(document.getElementById('totalAPagar').textContent.replace('Total a Pagar $', ''));
         var tipoTarjetaPos = document.getElementById('tipoTarjetaPos').value;
-        var cuotasPos = document.getElementById('cuotasPos').value; 
+        var cuotasPos = document.getElementById('cuotasPos').value;
+        var tipoDocumentoCheque = document.getElementById('tipoDocumentoCheque').value;
+        var numeroDocumentoCheque = document.getElementById('numeroDocumentoCheque').value;
+        var fechaEmisionCheque = document.getElementById('fechaEmisionCheque').value;
+        
 
-
-        if (montoEfectivo + montoPos !== totalAPagar) {
+        if (montoEfectivo + montoPos + montoCheque !== totalAPagar) {
             alert('La suma de los montos no coincide con el total a pagar.');
             return;
         }
@@ -426,26 +430,26 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         });
 
-        // Datos adicionales para los pagos
         var datosAdicionales = {
-        tipoDocumentoEfectivo: document.getElementById('tipoDocumento').value,
-        tipoDocumentoPos: tipoTarjetaPos, // Modificación aquí
-        numeroComprobantePos: document.getElementById('comprobantePos').value,
-        montoEfectivo: montoEfectivo,
-        montoPos: montoPos,
-        fechaPago: new Date().toISOString().split('T')[0],
-        cuotasPos: cuotasPos // Incluir el número de cuotas en los datos adicionales
+            tipoDocumentoEfectivo: document.getElementById('tipoDocumento').value,
+            tipoDocumentoPos: tipoTarjetaPos,
+            cuotasPos: cuotasPos,
+            tipoDocumentoCheque: tipoDocumentoCheque,
+            numeroDocumentoCheque: numeroDocumentoCheque,
+            numeroComprobantePos: document.getElementById('comprobantePos').value,
+            fechaEmisionCheque: fechaEmisionCheque,
+            montoEfectivo: montoEfectivo,
+            montoPos: montoPos,
+            montoCheque: montoCheque,
+            fechaPago: new Date().toISOString().split('T')[0]
+        };
 
-    };
-
-        // Envío de la información al servidor
         var xhr = new XMLHttpRequest();
         xhr.open('POST', 'procesar_pago.php', true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onload = function() {
             if (xhr.status === 200) {
                 alert('Pago registrado con éxito.');
-                // Aquí puedes agregar más lógica después del registro exitoso
             } else {
                 alert('Error al registrar el pago.');
             }

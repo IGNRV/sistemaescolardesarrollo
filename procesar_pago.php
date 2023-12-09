@@ -21,32 +21,37 @@ function procesarPago($pago, $adicionales, $conn) {
     if ($adicionales['montoPos'] > 0) {
         insertarDetalleTransaccion($pago, 'POS', $adicionales['montoPos'], $adicionales, $conn);
     }
+    if ($adicionales['montoCheque'] > 0) {
+        insertarDetalleTransaccion($pago, 'CHEQUE', $adicionales['montoCheque'], $adicionales, $conn);
+    }
     actualizarHistorialPagos($pago, $conn);
 }
 
 function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales, $conn) {
-    $numeroDocumento = ($tipoDocumento == 'EFECTIVO') 
-        ? obtenerSiguienteNumeroDocumentoParaEfectivo($conn) 
-        : ($tipoDocumento == 'POS' ? $adicionales['numeroComprobantePos'] : obtenerSiguienteNumeroDocumento($conn));
+    // El número de documento varía según el tipo de pago
+    if ($tipoDocumento == 'EFECTIVO') {
+        $numeroDocumento = obtenerSiguienteNumeroDocumentoParaEfectivo($conn);
+    } elseif ($tipoDocumento == 'POS') {
+        $numeroDocumento = $adicionales['numeroComprobantePos'];
+    } else { // CHEQUE
+        $numeroDocumento = $adicionales['numeroDocumentoCheque'];
+    }
 
+    // Asignar medio de pago y número de cuotas si es POS
     $medioPago = ($tipoDocumento == 'POS') ? $adicionales['tipoDocumentoPos'] : $tipoDocumento;
-    
-    // Obtener el número de cuotas, si no hay valor, asignar 0
     $nCuotas = ($tipoDocumento == 'POS' && !empty($adicionales['cuotasPos'])) ? $adicionales['cuotasPos'] : 0;
 
     $stmt = $conn->prepare("INSERT INTO DETALLES_TRANSACCION (ANO, CODIGO_PRODUCTO, FOLIO_PAGO, VALOR, FECHA_PAGO, MEDIO_DE_PAGO, N_CUOTAS, ESTADO, FECHA_VENCIMIENTO, TIPO_DOCUMENTO, NUMERO_DOCUMENTO, FECHA_EMISION, FECHA_COBRO, ID_PAGO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("sissssissssssi", $ano, $codigoProducto, $folioPago, $valor, $fechaPago, $medioPago, $nCuotas, $estado, $fechaVencimiento, $tipoDocumento, $numeroDocumento, $fechaEmision, $fechaCobro, $idPago);
 
+    // Asignaciones comunes
     $ano = date('Y');
     $codigoProducto = $pago['codigoProducto'];
     $folioPago = $pago['folioPago'];
     $valor = $monto;
     $fechaPago = $adicionales['fechaPago'];
-    $medioPago = $medioPago;
-    $nCuotas = $nCuotas;
     $estado = 1;
     $fechaVencimiento = $pago['fechaVencimiento'];
-    $tipoDocumento = $tipoDocumento;
     $fechaEmision = date('Y-m-d');
     $fechaCobro = date('Y-m-d');
     $idPago = $pago['idPago'];
