@@ -286,6 +286,30 @@ if (isset($_POST['btnBuscarAlumno'])) {
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 <!-- ... Resto del HTML anterior ... -->
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+            // Obtiene los checkboxes y los divs correspondientes
+            var efectivoCheckbox = document.getElementById('efectivo');
+            var pagoPosCheckbox = document.getElementById('pagoPos');
+            var chequeCheckbox = document.getElementById('cheque');
+            var seccionEfectivo = document.getElementById('seccionEfectivo');
+            var seccionPagoPos = document.getElementById('seccionPagoPos');
+            var seccionCheque = document.getElementById('seccionCheque');
+
+            // Función para actualizar la visibilidad de los divs
+            function actualizarVisibilidad() {
+                seccionEfectivo.style.display = efectivoCheckbox.checked ? 'block' : 'none';
+                seccionPagoPos.style.display = pagoPosCheckbox.checked ? 'block' : 'none';
+                seccionCheque.style.display = chequeCheckbox.checked ? 'block' : 'none';
+            }
+
+            // Event listeners para los cambios en los checkboxes
+            efectivoCheckbox.addEventListener('change', actualizarVisibilidad);
+            pagoPosCheckbox.addEventListener('change', actualizarVisibilidad);
+            chequeCheckbox.addEventListener('change', actualizarVisibilidad);
+
+            // Llamada inicial para establecer la visibilidad correcta al cargar la página
+            actualizarVisibilidad();
+        });
     document.addEventListener('DOMContentLoaded', function () {
     var checkboxes = Array.from(document.querySelectorAll('input[type="checkbox"][name="seleccionarPago[]"]'));
     var btnSeleccionarValores = document.getElementById('btnSeleccionarValores');
@@ -331,7 +355,7 @@ if (isset($_POST['btnBuscarAlumno'])) {
         checkboxes.forEach(function(checkbox) {
             totalAPagar += parseFloat(checkbox.value);
         });
-        document.getElementById('totalAPagar').textContent = 'Total a Pagar $' + totalAPagar.toFixed(2);
+        document.getElementById('totalAPagar').textContent = 'Total a Pagar $' + totalAPagar.toFixed(0);
     });
 
     payWithTransferButton.addEventListener('click', function() {
@@ -355,9 +379,57 @@ document.addEventListener('DOMContentLoaded', function() {
             checkboxes.forEach(function(checkbox) {
                 totalAPagar += parseFloat(checkbox.value);
             });
-            totalAPagarElement.textContent = 'Total a Pagar $' + totalAPagar.toFixed(2);
+            totalAPagarElement.textContent = 'Total a Pagar $' + totalAPagar.toFixed(0);
         });
     });
+
+    document.addEventListener('DOMContentLoaded', function() {
+    var btnRegistrarPago = document.getElementById('btnRegistrarPago');
+    var montoEfectivo = document.getElementById('montoEfectivo');
+    var totalAPagarElement = document.getElementById('totalAPagar');
+    var tipoDocumento = document.getElementById('tipoDocumento');
+
+    btnRegistrarPago.addEventListener('click', function() {
+        var monto = parseFloat(montoEfectivo.value);
+        var totalAPagar = parseFloat(totalAPagarElement.textContent.replace('Total a Pagar $', ''));
+        
+        if (monto !== totalAPagar) {
+            alert('El monto de efectivo no coincide con el total a pagar.');
+            return;
+        }
+        
+        // Lógica para recopilar información de los pagos seleccionados
+        var pagosSeleccionados = document.querySelectorAll('.seleccionarPago:checked');
+        var datosPagos = Array.from(pagosSeleccionados).map(function(checkbox) {
+            return {
+                codigoProducto: checkbox.getAttribute('data-codigo-producto'),
+                folioPago: checkbox.getAttribute('data-folio-pago'),
+                valor: checkbox.value,
+                fechaVencimiento: checkbox.getAttribute('data-fecha-vencimiento')
+            };
+        });
+
+        // Envío de la información al servidor
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', 'procesar_pago.php', true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                alert('Pago registrado con éxito.');
+                // Aquí puedes agregar más lógica después del registro exitoso
+            } else {
+                alert('Error al registrar el pago.');
+            }
+        };
+        xhr.send(JSON.stringify({
+            pagos: datosPagos,
+            tipoDocumento: tipoDocumento.value,
+            monto: monto,
+            fechaPago: new Date().toISOString().split('T')[0] // Fecha actual
+        }));
+    });
+});
+
 </script>
 
 </body>
