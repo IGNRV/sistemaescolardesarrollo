@@ -403,26 +403,34 @@ document.addEventListener('DOMContentLoaded', function() {
     var tipoDocumento = document.getElementById('tipoDocumento');
 
     btnRegistrarPago.addEventListener('click', function() {
-        var monto = parseFloat(montoEfectivo.value);
-        var totalAPagar = parseFloat(totalAPagarElement.textContent.replace('Total a Pagar $', ''));
-        
-        if (monto !== totalAPagar) {
-            alert('El monto de efectivo no coincide con el total a pagar.');
+        var montoEfectivo = parseFloat(document.getElementById('montoEfectivo').value || 0);
+        var montoPos = parseFloat(document.getElementById('montoPos').value || 0);
+        var totalAPagar = parseFloat(document.getElementById('totalAPagar').textContent.replace('Total a Pagar $', ''));
+
+        if (montoEfectivo + montoPos !== totalAPagar) {
+            alert('La suma de los montos no coincide con el total a pagar.');
             return;
         }
-        
-        // Lógica para recopilar información de los pagos seleccionados
+
         var pagosSeleccionados = document.querySelectorAll('.seleccionarPago:checked');
         var datosPagos = Array.from(pagosSeleccionados).map(function(checkbox) {
-    return {
-        idPago: checkbox.getAttribute('data-id-pago'), // Añadir ID_PAGO
-        codigoProducto: checkbox.getAttribute('data-codigo-producto'),
-        folioPago: checkbox.getAttribute('data-folio-pago'),
-        valor: checkbox.value,
-        fechaVencimiento: checkbox.getAttribute('data-fecha-vencimiento')
-    };
-});
+            return {
+                idPago: checkbox.getAttribute('data-id-pago'),
+                codigoProducto: checkbox.getAttribute('data-codigo-producto'),
+                folioPago: checkbox.getAttribute('data-folio-pago'),
+                valor: checkbox.value,
+                fechaVencimiento: checkbox.getAttribute('data-fecha-vencimiento')
+            };
+        });
 
+        // Datos adicionales para los pagos
+        var datosAdicionales = {
+            tipoDocumentoEfectivo: document.getElementById('tipoDocumento').value,
+            tipoDocumentoPos: document.getElementById('tipoDocumentoPos').value,
+            montoEfectivo: montoEfectivo,
+            montoPos: montoPos,
+            fechaPago: new Date().toISOString().split('T')[0] // Fecha actual
+        };
 
         // Envío de la información al servidor
         var xhr = new XMLHttpRequest();
@@ -436,12 +444,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Error al registrar el pago.');
             }
         };
-        xhr.send(JSON.stringify({
-            pagos: datosPagos,
-            tipoDocumento: tipoDocumento.value,
-            monto: monto,
-            fechaPago: new Date().toISOString().split('T')[0] // Fecha actual
-        }));
+        xhr.send(JSON.stringify({ pagos: datosPagos, adicionales: datosAdicionales }));
     });
 });
 
