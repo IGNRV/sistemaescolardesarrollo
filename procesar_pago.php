@@ -7,7 +7,6 @@ if (!empty($data['pagos'])) {
     $adicionales = $data['adicionales'];
 
     foreach ($data['pagos'] as $pago) {
-        // Procesar cada pago individualmente
         procesarPago($pago, $adicionales, $conn);
     }
     echo 'Pago registrado con éxito.';
@@ -16,35 +15,30 @@ if (!empty($data['pagos'])) {
 }
 
 function procesarPago($pago, $adicionales, $conn) {
-    // Insertar en DETALLES_TRANSACCION para efectivo
     if ($adicionales['montoEfectivo'] > 0) {
-        insertarDetalleTransaccion($pago, $adicionales['tipoDocumentoEfectivo'], $adicionales['montoEfectivo'], $conn);
+        insertarDetalleTransaccion($pago, 'EFECTIVO', $adicionales['montoEfectivo'], $adicionales, $conn);
     }
-
-    // Insertar en DETALLES_TRANSACCION para POS
     if ($adicionales['montoPos'] > 0) {
-        insertarDetalleTransaccion($pago, $adicionales['tipoDocumentoPos'], $adicionales['montoPos'], $conn);
+        insertarDetalleTransaccion($pago, 'POS', $adicionales['montoPos'], $adicionales, $conn);
     }
-
-    // Actualizar el estado del pago en HISTORIAL_PAGOS
     actualizarHistorialPagos($pago, $conn);
 }
 
-function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $conn) {
+function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales, $conn) {
+    $numeroDocumento = ($tipoDocumento == 'POS') ? $adicionales['numeroComprobantePos'] : obtenerSiguienteNumeroDocumento($conn);
+
     $stmt = $conn->prepare("INSERT INTO DETALLES_TRANSACCION (ANO, CODIGO_PRODUCTO, FOLIO_PAGO, VALOR, FECHA_PAGO, MEDIO_DE_PAGO, ESTADO, FECHA_VENCIMIENTO, TIPO_DOCUMENTO, NUMERO_DOCUMENTO, FECHA_EMISION, FECHA_COBRO, ID_PAGO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("sissssisssssi", $ano, $codigoProducto, $folioPago, $valor, $fechaPago, $medioPago, $estado, $fechaVencimiento, $tipoDocumento, $numeroDocumento, $fechaEmision, $fechaCobro, $idPago);
 
-    // Asignar valores a las variables
     $ano = date('Y');
     $codigoProducto = $pago['codigoProducto'];
     $folioPago = $pago['folioPago'];
-    $valor = $monto; // Monto del pago
+    $valor = $monto;
     $fechaPago = $adicionales['fechaPago'];
     $medioPago = $tipoDocumento;
-    $estado = 1; // Suponiendo que el pago es exitoso
+    $estado = 1;
     $fechaVencimiento = $pago['fechaVencimiento'];
     $tipoDocumento = $tipoDocumento;
-    $numeroDocumento = obtenerSiguienteNumeroDocumento($conn);
     $fechaEmision = date('Y-m-d');
     $fechaCobro = date('Y-m-d');
     $idPago = $pago['idPago'];
@@ -57,9 +51,7 @@ function actualizarHistorialPagos($pago, $conn) {
     $fechaActual = date('Y-m-d');
     $stmtUpdate = $conn->prepare("UPDATE HISTORIAL_PAGOS SET ESTADO_PAGO = 2, FECHA_PAGO = ? WHERE ID_PAGO = ?");
     $stmtUpdate->bind_param("si", $fechaActual, $idPago);
-
     $idPago = $pago['idPago'];
-
     $stmtUpdate->execute();
     $stmtUpdate->close();
 }

@@ -427,9 +427,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var datosAdicionales = {
             tipoDocumentoEfectivo: document.getElementById('tipoDocumento').value,
             tipoDocumentoPos: document.getElementById('tipoDocumentoPos').value,
+            numeroComprobantePos: document.getElementById('comprobantePos').value, // Agregado
             montoEfectivo: montoEfectivo,
             montoPos: montoPos,
-            fechaPago: new Date().toISOString().split('T')[0] // Fecha actual
+            fechaPago: new Date().toISOString().split('T')[0]
         };
 
         // Envío de la información al servidor
