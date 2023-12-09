@@ -25,7 +25,9 @@ function procesarPago($pago, $adicionales, $conn) {
 }
 
 function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales, $conn) {
-    $numeroDocumento = ($tipoDocumento == 'POS') ? $adicionales['numeroComprobantePos'] : obtenerSiguienteNumeroDocumento($conn);
+    $numeroDocumento = ($tipoDocumento == 'EFECTIVO') 
+        ? obtenerSiguienteNumeroDocumentoParaEfectivo($conn) 
+        : ($tipoDocumento == 'POS' ? $adicionales['numeroComprobantePos'] : obtenerSiguienteNumeroDocumento($conn));
 
     $stmt = $conn->prepare("INSERT INTO DETALLES_TRANSACCION (ANO, CODIGO_PRODUCTO, FOLIO_PAGO, VALOR, FECHA_PAGO, MEDIO_DE_PAGO, ESTADO, FECHA_VENCIMIENTO, TIPO_DOCUMENTO, NUMERO_DOCUMENTO, FECHA_EMISION, FECHA_COBRO, ID_PAGO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("sissssisssssi", $ano, $codigoProducto, $folioPago, $valor, $fechaPago, $medioPago, $estado, $fechaVencimiento, $tipoDocumento, $numeroDocumento, $fechaEmision, $fechaCobro, $idPago);
@@ -54,6 +56,12 @@ function actualizarHistorialPagos($pago, $conn) {
     $idPago = $pago['idPago'];
     $stmtUpdate->execute();
     $stmtUpdate->close();
+}
+
+function obtenerSiguienteNumeroDocumentoParaEfectivo($conn) {
+    $resultado = $conn->query("SELECT MAX(NUMERO_DOCUMENTO) AS ultimoNumero FROM DETALLES_TRANSACCION WHERE MEDIO_DE_PAGO = 'EFECTIVO'");
+    $fila = $resultado->fetch_assoc();
+    return $fila['ultimoNumero'] + 1;
 }
 
 function obtenerSiguienteNumeroDocumento($conn) {
