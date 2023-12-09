@@ -11,57 +11,60 @@ if (isset($_POST['btnBuscarAlumno'])) {
 
     // Consulta a la base de datos
     $stmt = $conn->prepare("SELECT 
-                                hp.ID_PAGO,
-                                hp.ID_ALUMNO,
-                                a.RUT_ALUMNO,
-                                hp.CODIGO_PRODUCTO,
-                                hp.FOLIO_PAGO,
-                                hp.VALOR_ARANCEL,
-                                hp.DESCUENTO_BECA,
-                                hp.OTROS_DESCUENTOS,
-                                hp.VALOR_A_PAGAR,
-                                hp.FECHA_PAGO,
-                                hp.MEDIO_PAGO,
-                                hp.NRO_MEDIOPAGO,
-                                hp.FECHA_SUSCRIPCION,
-                                hp.BANCO_EMISOR,
-                                hp.TIPO_MEDIOPAGO,
-                                hp.ESTADO_PAGO,
-                                hp.TIPO_DOCUMENTO,
-                                hp.NUMERO_DOCUMENTO,
-                                hp.FECHA_VENCIMIENTO,
-                                hp.FECHA_INGRESO,
-                                hp.FECHA_EMISION,
-                                hp.FECHA_COBRO,
-                                hp.ID_PERIODO_ESCOLAR
-                            FROM
-                                c1occsyspay.HISTORIAL_PAGOS AS hp
-                                    LEFT JOIN
-                                ALUMNO AS a ON a.ID_ALUMNO = hp.ID_ALUMNO
-                            WHERE
-                                a.RUT_ALUMNO = ?");
-    $stmt->bind_param("s", $rutAlumno);
-    $stmt->execute();
-    $resultado = $stmt->get_result();
+    hp.ID_PAGO,
+    hp.ID_ALUMNO,
+    a.RUT_ALUMNO,
+    hp.CODIGO_PRODUCTO,
+    hp.FOLIO_PAGO,
+    hp.VALOR_ARANCEL,
+    hp.DESCUENTO_BECA,
+    hp.OTROS_DESCUENTOS,
+    hp.VALOR_A_PAGAR,
+    hp.FECHA_PAGO,
+    hp.MEDIO_PAGO,
+    hp.NRO_MEDIOPAGO,
+    hp.FECHA_SUSCRIPCION,
+    hp.BANCO_EMISOR,
+    hp.TIPO_MEDIOPAGO,
+    hp.ESTADO_PAGO,
+    hp.TIPO_DOCUMENTO,
+    hp.NUMERO_DOCUMENTO,
+    hp.FECHA_VENCIMIENTO,
+    hp.FECHA_INGRESO,
+    hp.FECHA_EMISION,
+    hp.FECHA_COBRO,
+    hp.ID_PERIODO_ESCOLAR
+FROM
+    c1occsyspay.HISTORIAL_PAGOS AS hp
+        LEFT JOIN
+    ALUMNO AS a ON a.ID_ALUMNO = hp.ID_ALUMNO
+WHERE
+    a.RUT_ALUMNO = ?
+ORDER BY
+    hp.FECHA_VENCIMIENTO ASC"); // Ordenar por FECHA_VENCIMIENTO ascendente
+$stmt->bind_param("s", $rutAlumno);
+$stmt->execute();
+$resultado = $stmt->get_result();
 
-    if ($resultado->num_rows > 0) {
-        while ($fila = $resultado->fetch_assoc()) {
-            $fechaVencimiento = new DateTime($fila['FECHA_VENCIMIENTO']);
-            $yearVencimiento = $fechaVencimiento->format('Y');
-            
-            if ($yearVencimiento < $yearActual) {
-                // Agregar a saldo del período anterior
-                $saldoPeriodoAnterior[] = $fila;
-            } else {
-                // Agregar a cuotas del período actual
-                $cuotasPeriodoActual[] = $fila;
-            }
+if ($resultado->num_rows > 0) {
+    while ($fila = $resultado->fetch_assoc()) {
+        $fechaVencimiento = new DateTime($fila['FECHA_VENCIMIENTO']);
+        $yearVencimiento = $fechaVencimiento->format('Y');
+
+        if ($yearVencimiento < $yearActual) {
+            // Agregar a saldo del período anterior
+            $saldoPeriodoAnterior[] = $fila;
+        } else {
+            // Agregar a cuotas del período actual
+            $cuotasPeriodoActual[] = $fila;
         }
-        $mensaje = "Datos encontrados.";
-    } else {
-        $mensaje = "No se encontraron datos para el RUT ingresado.";
     }
-    $stmt->close();
+    $mensaje = "Datos encontrados.";
+} else {
+    $mensaje = "No se encontraron datos para el RUT ingresado.";
+}
+$stmt->close();
+
 }
 ?>
 <!DOCTYPE html>
@@ -109,52 +112,57 @@ if (isset($_POST['btnBuscarAlumno'])) {
     <!-- Las tablas generadas se insertarán aquí -->
 </div>
 <div class="mt-4 table-responsive">
-                            <h4>Saldo Periodo Anterior</h4>
-                            <table class="table" id="tablaSaldoPeriodoAnterior">
-                                <thead>
-                                    <tr>
-                                        <th>N° Cuota</th>
-                                        <th>Fecha Vencimiento</th>
-                                        <th>Monto</th>
-                                        <th>Medio de Pago</th>
-                                        <th>Fecha de Pago</th>
-                                        <th>Estado</th>
-                                        <th>Seleccione Valor a Pagar</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($saldoPeriodoAnterior as $index => $pago): ?>
-                                        <tr>
-                                            <td><?php echo $index + 1; ?></td>
-                                            <td><?php echo htmlspecialchars($pago['FECHA_VENCIMIENTO']); ?></td>
-                                            <td><?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?></td>
-                                            <td><?php echo htmlspecialchars($pago['MEDIO_PAGO']); ?></td>
-                                            <td><?php echo htmlspecialchars($pago['FECHA_PAGO']); ?></td>
-                                            <td><?php echo htmlspecialchars($pago['ESTADO_PAGO']); ?></td>
-                                            <td><input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>"></td>
-
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
+    <h4>Saldo Periodo Anterior</h4>
+    <table class="table" id="tablaSaldoPeriodoAnterior">
+        <thead>
+            <tr>
+                <th>N° Cuota</th>
+                <th>Fecha Vencimiento</th>
+                <th>Monto</th>
+                <th>Medio de Pago</th>
+                <th>Fecha de Pago</th>
+                <th>Estado</th>
+                <th>Seleccione Valor a Pagar</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($saldoPeriodoAnterior as $index => $pago): ?>
+                <tr>
+                    <td><?php echo $index + 1; ?></td>
+                    <td><?php echo htmlspecialchars($pago['FECHA_VENCIMIENTO']); ?></td>
+                    <td><?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?></td>
+                    <td><?php echo htmlspecialchars($pago['MEDIO_PAGO']); ?></td>
+                    <td><?php echo htmlspecialchars($pago['FECHA_PAGO']); ?></td>
+                    <td><?php echo htmlspecialchars($pago['ESTADO_PAGO']); ?></td>
+                    <td>
+                        <?php if ($pago['ESTADO_PAGO'] != 2): ?>
+                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>">
+                        <?php else: ?>
+                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>" disabled>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
 
 <!-- Tabla de cuotas del periodo actual -->
 <div class="mt-4 table-responsive">
-                            <h4>Cuotas Periodo Actual</h4>
-                            <table class="table" id="tablaCuotasPeriodoActual">
-                                <thead>
-                                    <tr>
-                                        <th>N° Cuota</th>
-                                        <th>Fecha Vencimiento</th>
-                                        <th>Monto</th>
-                                        <th>Medio de Pago</th>
-                                        <th>Fecha de Pago</th>
-                                        <th>Estado</th>
-                                        <th>Seleccione Valor a Pagar</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+    <h4>Cuotas Periodo Actual</h4>
+    <table class="table" id="tablaCuotasPeriodoActual">
+        <thead>
+            <tr>
+                <th>N° Cuota</th>
+                <th>Fecha Vencimiento</th>
+                <th>Monto</th>
+                <th>Medio de Pago</th>
+                <th>Fecha de Pago</th>
+                <th>Estado</th>
+                <th>Seleccione Valor a Pagar</th>
+            </tr>
+        </thead>
+        <tbody>
             <?php foreach ($cuotasPeriodoActual as $index => $pago): ?>
                 <tr>
                     <td><?php echo $index + 1; ?></td>
@@ -163,13 +171,18 @@ if (isset($_POST['btnBuscarAlumno'])) {
                     <td><?php echo htmlspecialchars($pago['MEDIO_PAGO']); ?></td>
                     <td><?php echo htmlspecialchars($pago['FECHA_PAGO']); ?></td>
                     <td><?php echo htmlspecialchars($pago['ESTADO_PAGO']); ?></td>
-                    <td><input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>"></td>
-
+                    <td>
+                        <?php if ($pago['ESTADO_PAGO'] != 2): ?>
+                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>">
+                        <?php else: ?>
+                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>" disabled>
+                        <?php endif; ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
-                            </table>
-                        </div>
+    </table>
+</div>
 
                         <div>
                             <button type="button" class="btn btn-primary" id="btnSeleccionarValores">Seleccionar valores</button>
@@ -401,13 +414,15 @@ document.addEventListener('DOMContentLoaded', function() {
         // Lógica para recopilar información de los pagos seleccionados
         var pagosSeleccionados = document.querySelectorAll('.seleccionarPago:checked');
         var datosPagos = Array.from(pagosSeleccionados).map(function(checkbox) {
-            return {
-                codigoProducto: checkbox.getAttribute('data-codigo-producto'),
-                folioPago: checkbox.getAttribute('data-folio-pago'),
-                valor: checkbox.value,
-                fechaVencimiento: checkbox.getAttribute('data-fecha-vencimiento')
-            };
-        });
+    return {
+        idPago: checkbox.getAttribute('data-id-pago'), // Añadir ID_PAGO
+        codigoProducto: checkbox.getAttribute('data-codigo-producto'),
+        folioPago: checkbox.getAttribute('data-folio-pago'),
+        valor: checkbox.value,
+        fechaVencimiento: checkbox.getAttribute('data-fecha-vencimiento')
+    };
+});
+
 
         // Envío de la información al servidor
         var xhr = new XMLHttpRequest();
@@ -429,6 +444,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }));
     });
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+        var checkboxes = document.querySelectorAll('.seleccionarPago');
+
+        checkboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                // Desactivar todos los otros checkboxes
+                checkboxes.forEach(function(otherCheckbox) {
+                    if (otherCheckbox !== checkbox) {
+                        otherCheckbox.disabled = checkbox.checked;
+                    }
+                });
+            });
+        });
+
+        // Función para calcular el total a pagar y actualizarlo cuando cambien las selecciones
+        function calcularTotalAPagar() {
+            var totalAPagar = 0;
+            checkboxes.forEach(function(checkbox) {
+                if (checkbox.checked) {
+                    totalAPagar += parseFloat(checkbox.value);
+                }
+            });
+
+            // Actualizar el elemento en el HTML
+            var totalAPagarElement = document.getElementById('totalAPagar');
+            totalAPagarElement.textContent = 'Total a Pagar $' + totalAPagar.toFixed(0);
+        }
+
+        // Llamar a la función al cargar la página y cuando cambie una selección
+        calcularTotalAPagar();
+        checkboxes.forEach(function(checkbox) {
+            checkbox.addEventListener('change', calcularTotalAPagar);
+        });
+    });
 
 </script>
 
