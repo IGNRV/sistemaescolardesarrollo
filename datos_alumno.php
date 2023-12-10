@@ -64,6 +64,17 @@ if (isset($_POST['buscarAlumno'])) {
         $mensaje = "Alumno encontrado.";
         $alumno = $resultado->fetch_assoc();
 
+        // Busca la comuna actual del alumno
+        $idComunaAlumno = $alumno['ID_COMUNA'];
+        $stmtComunaAlumno = $conn->prepare("SELECT NOM_COMUNA FROM COMUNA WHERE ID_COMUNA = ?");
+        $stmtComunaAlumno->bind_param("s", $idComunaAlumno);
+        $stmtComunaAlumno->execute();
+        $resultadoComunaAlumno = $stmtComunaAlumno->get_result();
+        if ($resultadoComunaAlumno->num_rows > 0) {
+            $comunaAlumno = $resultadoComunaAlumno->fetch_assoc()['NOM_COMUNA'];
+        }
+        $stmtComunaAlumno->close();
+
         // Consulta para obtener las observaciones del alumno
         $stmtObs = $conn->prepare("SELECT * FROM OBSERVACIONES WHERE RUT_ALUMNO = ?");
         $stmtObs->bind_param("s", $rutAlumno);
@@ -151,22 +162,23 @@ if (isset($_POST['agregar_observacion'])) {
 // Verifica si se ha enviado el formulario de agregar alumno
 if (isset($_POST['agregarAlumno'])) {
     // Recoge los datos del formulario
-    $nombreNuevo = $_POST['nombreNuevo'];
-    $apPaternoNuevo = $_POST['apPaternoNuevo'];
-    $apMaternoNuevo = $_POST['apMaternoNuevo'];
-    $fechaNacNuevo = $_POST['fechaNacNuevo'];
-    $rutAlumnoNuevo = $_POST['rutAlumnoNuevo'];
-    $rdaNuevo = $_POST['rdaNuevo'];
-    $calleNuevo = $_POST['calleNuevo'];
-    $nroCalleNuevo = $_POST['nroCalleNuevo'];
-    $obsDireccionNuevo = $_POST['obsDireccionNuevo'];
-    $villaNuevo = $_POST['villaNuevo'];
-    $comunaSeleccionada = $_POST['comunaNuevo'];
+    $nombreNuevo = strtoupper($_POST['nombreNuevo']);
+    $apPaternoNuevo = strtoupper($_POST['apPaternoNuevo']);
+    $apMaternoNuevo = strtoupper($_POST['apMaternoNuevo']);
+    $fechaNacNuevo = strtoupper($_POST['fechaNacNuevo']);
+    $rutAlumnoNuevo = strtoupper($_POST['rutAlumnoNuevo']);
+    $rdaNuevo = strtoupper($_POST['rdaNuevo']);
+    $calleNuevo = strtoupper($_POST['calleNuevo']);
+    $nroCalleNuevo = strtoupper($_POST['nroCalleNuevo']);
+    $obsDireccionNuevo = strtoupper($_POST['obsDireccionNuevo']);
+    $villaNuevo = strtoupper($_POST['villaNuevo']);
+    $comunaSeleccionada = strtoupper($_POST['comunaNuevo']);
+    $fonoNuevo = strtoupper($_POST['fonoNuevo']);
+    $cursoSeleccionado = strtoupper($_POST['curso']);
+    $fotoalumno = strtoupper($_POST['fotoalumno']);
+    $fechaingreso = strtoupper($_POST['fechaingreso']);
     $mailNuevo = $_POST['mailNuevo'];
-    $fonoNuevo = $_POST['fonoNuevo'];
-    $cursoSeleccionado = $_POST['curso'];
-    $fotoalumno = $_POST['fotoalumno'];
-    $fechaingreso = $_POST['fechaingreso'];
+
     $periodoescolar = 2;
     $status = 1;
     $deleteflag = 1;
@@ -187,10 +199,10 @@ if (isset($_POST['agregarAlumno'])) {
     $idcomuna = $comunaData ? $comunaData['ID_COMUNA'] : null;
     $idRegion = $comunaData ? $comunaData['ID_REGION'] : null;
 
-    // Prepara la consulta SQL para insertar el nuevo alumno
     $stmtNuevo = $conn->prepare("INSERT INTO ALUMNO (NOMBRE, AP_PATERNO, AP_MATERNO, FECHA_NAC, RUT_ALUMNO, RDA, CALLE, NRO_CALLE, OBS_DIRECCION, VILLA, COMUNA, ID_REGION, MAIL, FONO, CURSO, ID_CURSO, ID_COMUNA, FOTO_ALUMNO, FECHA_INGRESO, PERIODO_ESCOLAR, STATUS, DELETE_FLAG) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     $stmtNuevo->bind_param("ssssssssssssssssssssss", $nombreNuevo, $apPaternoNuevo, $apMaternoNuevo, $fechaNacNuevo, $rutAlumnoNuevo, $rdaNuevo, $calleNuevo, $nroCalleNuevo, $obsDireccionNuevo, $villaNuevo, $comunaSeleccionada, $idRegion, $mailNuevo, $fonoNuevo, $cursoSeleccionado, $idcurso, $idcomuna, $fotoalumno, $fechaingreso, $periodoescolar, $status, $deleteflag);
     $stmtNuevo->execute();
+
 
     if ($stmtNuevo->affected_rows > 0) {
         $mensaje = "Nuevo alumno agregado con éxito.";
@@ -224,16 +236,16 @@ if (isset($_POST['agregarAlumno'])) {
                 <input type="hidden" name="rut" value="<?php echo $rut; ?>">
                 <div class="form-group">
         <label>Nombre:</label>
-        <input type="text" class="form-control" name="name" value="<?php echo isset($alumno['NOMBRE']) ? $alumno['NOMBRE'] : ''; ?>">
+        <input type="text" class="form-control to-uppercase" name="name" value="<?php echo isset($alumno['NOMBRE']) ? $alumno['NOMBRE'] : ''; ?>">
     </div>
                 <div class="form-group">
                     <label>Apellido Paterno:</label>
-                    <input type="text" class="form-control" name="ap_paterno" value="<?php echo isset($alumno['AP_PATERNO']) ? $alumno['AP_PATERNO'] : ''; ?>">
+                    <input type="text" class="form-control to-uppercase" name="ap_paterno" value="<?php echo isset($alumno['AP_PATERNO']) ? $alumno['AP_PATERNO'] : ''; ?>">
 
                 </div>
                 <div class="form-group">
                     <label>Apellido Materno:</label>
-                    <input type="text" class="form-control" name="ap_materno" value="<?php echo isset($alumno['AP_MATERNO']) ? $alumno['AP_MATERNO'] : ''; ?>">
+                    <input type="text" class="form-control to-uppercase" name="ap_materno" value="<?php echo isset($alumno['AP_MATERNO']) ? $alumno['AP_MATERNO'] : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>Fecha de Nacimiento:</label>
@@ -245,32 +257,38 @@ if (isset($_POST['agregarAlumno'])) {
                 </div>
                 <div class="form-group">
                     <label>RDA:</label>
-                    <input type="text" class="form-control" name="rda" value="<?php echo isset($alumno['RDA']) ? $alumno['RDA'] : ''; ?>">
+                    <input type="text" class="form-control to-uppercase" name="rda" value="<?php echo isset($alumno['RDA']) ? $alumno['RDA'] : ''; ?>">
                 </div>
             
                 <div class="form-group">
                     <label>Calle:</label>
-                    <input type="text" class="form-control" name="calle" value="<?php echo isset($alumno['CALLE']) ? $alumno['CALLE'] : ''; ?>">
+                    <input type="text" class="form-control to-uppercase" name="calle" value="<?php echo isset($alumno['CALLE']) ? $alumno['CALLE'] : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>Número:</label>
-                    <input type="text" class="form-control" name="nro_calle" value="<?php echo isset($alumno['NRO_CALLE']) ? $alumno['NRO_CALLE'] : ''; ?>">
+                    <input type="text" class="form-control to-uppercase" name="nro_calle" value="<?php echo isset($alumno['NRO_CALLE']) ? $alumno['NRO_CALLE'] : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>Resto Dirección:</label>
-                    <input type="text" class="form-control" name="obs_direccion" value="<?php echo isset($alumno['OBS_DIRECCION']) ? $alumno['OBS_DIRECCION'] : ''; ?>">
+                    <input type="text" class="form-control to-uppercase" name="obs_direccion" value="<?php echo isset($alumno['OBS_DIRECCION']) ? $alumno['OBS_DIRECCION'] : ''; ?>">
                 </div>
                 <div class="form-group">
                     <label>Villa/Población:</label>
-                    <input type="text" class="form-control" name="villa" value="<?php echo isset($alumno['VILLA']) ? $alumno['VILLA'] : ''; ?>">
+                    <input type="text" class="form-control to-uppercase" name="villa" value="<?php echo isset($alumno['VILLA']) ? $alumno['VILLA'] : ''; ?>">
                 </div>
                 <div class="form-group">
-                    <label>Comuna:</label>
-                    <input type="text" class="form-control" name="comuna" value="<?php echo isset($alumno['COMUNA']) ? $alumno['COMUNA'] : ''; ?>">
-                </div>
+        <label>Comuna:</label>
+        <select class="form-control" name="comuna">
+            <?php foreach ($comunas as $comuna): ?>
+                <option value="<?php echo htmlspecialchars($comuna); ?>" <?php echo (isset($comunaAlumno) && $comunaAlumno == $comuna) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($comuna); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
                 <div class="form-group">
-                    <label>Ciudad:</label>
-                    <input type="text" class="form-control" name="id_region" value="<?php echo isset($alumno['ID_REGION']) ? $alumno['ID_REGION'] : ''; ?>">
+                    <label>Curso:</label>
+                    <input type="text" class="form-control to-uppercase" name="curso" value="">
                 </div>
                 <div class="form-group">
                     <label>Email:</label>
@@ -284,87 +302,7 @@ if (isset($_POST['agregarAlumno'])) {
                 <button type="submit" class="btn btn-primary btn-block custom-button" name="actualizar">Actualizar</button>
             </form>
 
-            <h2>Agregar Nuevo Alumno</h2>
-<form action="" method="post">
-    <div class="form-group">
-        <label>Nombre:</label>
-        <input type="text" class="form-control" name="nombreNuevo" required>
-    </div>
-    <div class="form-group">
-        <label>Apellido Paterno:</label>
-        <input type="text" class="form-control" name="apPaternoNuevo" required>
-    </div>
-    <div class="form-group">
-        <label>Apellido Materno:</label>
-        <input type="text" class="form-control" name="apMaternoNuevo" required>
-    </div>
-    <div class="form-group">
-        <label>Fecha de Nacimiento:</label>
-        <input type="date" class="form-control" name="fechaNacNuevo" required>
-    </div>
-    <div class="form-group">
-        <label>RUT:</label>
-        <input type="text" class="form-control" name="rutAlumnoNuevo" required>
-    </div>
-    <div class="form-group">
-        <label>RDA:</label>
-        <input type="text" class="form-control" name="rdaNuevo">
-    </div>
-    <div class="form-group">
-        <label>Calle:</label>
-        <input type="text" class="form-control" name="calleNuevo">
-    </div>
-    <div class="form-group">
-        <label>Número de Calle:</label>
-        <input type="text" class="form-control" name="nroCalleNuevo">
-    </div>
-    <div class="form-group">
-        <label>Observaciones Dirección:</label>
-        <input type="text" class="form-control" name="obsDireccionNuevo">
-    </div>
-    <div class="form-group">
-        <label>Villa/Población:</label>
-        <input type="text" class="form-control" name="villaNuevo">
-    </div>
-    <div class="form-group">
-        <label>Comuna:</label>
-        <select class="form-control" name="comunaNuevo">
-            <?php foreach ($comunas as $comuna): ?>
-                <option value="<?php echo htmlspecialchars($comuna); ?>">
-                    <?php echo htmlspecialchars($comuna); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    
-    <div class="form-group">
-        <label>Email:</label>
-        <input type="email" class="form-control" name="mailNuevo">
-    </div>
-    <div class="form-group">
-        <label>Teléfono:</label>
-        <input type="text" class="form-control" name="fonoNuevo">
-    </div>
-    <div class="form-group">
-        <label>Curso:</label>
-        <select class="form-control" name="curso">
-            <?php foreach ($cursos as $curso): ?>
-                <option value="<?php echo htmlspecialchars($curso); ?>">
-                    <?php echo htmlspecialchars($curso); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-    <div class="form-group">
-        <label>Foto alumno:</label>
-        <input type="text" class="form-control" name="fotoalumno">
-    </div>
-    <div class="form-group">
-        <label>Fecha de Ingreso:</label>
-        <input type="date" class="form-control" name="fechaingreso" required>
-    </div>
-    <button type="submit" class="btn btn-success" name="agregarAlumno">Agregar Alumno</button>
-</form>
+          
 
             <h2>Observaciones</h2>
 <div class="table-responsive">
@@ -415,6 +353,14 @@ if (isset($_POST['agregarAlumno'])) {
 
 
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var inputs = document.querySelectorAll('.to-uppercase');
+        inputs.forEach(function(input) {
+            input.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        });
+    });
 function confirmDelete() {
     return confirm("¿Estás seguro de que quieres eliminar esta observación?");
 }
