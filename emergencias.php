@@ -33,16 +33,26 @@ function buscarDatos($conn, $rutAlumno) {
     return $resultado;
 }
 
+function buscarAntecedentes($conn, $rutAlumno) {
+    $stmt = $conn->prepare("SELECT ID_ANTECEDENTE, TIPO_ANTECEDENTE, DESCRIPCION_ANTECEDENTE, FECHA_INGRESO FROM ANTECEDENTES_EMERGENCIA WHERE RUT_ALUMNO = ? AND DELETE_FLAG = 0");
+    $stmt->bind_param("s", $rutAlumno);
+    $stmt->execute();
+    return $stmt->get_result();
+}
+
 // Procesar el formulario de búsqueda
 if (isset($_POST['buscarAlumno'])) {
     $rutAlumno = $_POST['rutAlumno'];
-    $resultado = buscarDatos($conn, $rutAlumno);
+    $resultadoBusqueda = buscarDatos($conn, $rutAlumno);
 
-    if ($resultado->num_rows > 0) {
-        $contactoEmergencia = $resultado->fetch_assoc();
+    if ($resultadoBusqueda->num_rows > 0) {
+        $contactoEmergencia = $resultadoBusqueda->fetch_assoc();
         $mensaje = "Alumno y contacto de emergencia encontrados.";
+        // Buscar antecedentes médicos del alumno encontrado
+        $resultadoAntecedentes = buscarAntecedentes($conn, $contactoEmergencia['RUT_ALUMNO']);
     } else {
         $mensaje = "Alumno no encontrado.";
+        $resultadoAntecedentes = null;
     }
 }
 
@@ -60,7 +70,7 @@ if (isset($_POST['agregar_antecedentes'])) {
         $periodoEscolarId = $_POST['periodoEscolar'];
 
         // Insertar los datos en la tabla ANTECEDENTES_EMERGENCIA
-        $stmtInsertarAntecedentes = $conn->prepare("INSERT INTO ANTECEDENTES_EMERGENCIA (RUT_ALUMNO, TIPO_ANTECEDENTE, DESCRIPCION_ANTECEDENTE, FECHA_INGRESO, PERIODO_ESCOLAR) VALUES (?, ?, ?, ?, ?)");
+        $stmtInsertarAntecedentes = $conn->prepare("INSERT INTO ANTECEDENTES_EMERGENCIA (RUT_ALUMNO, TIPO_ANTECEDENTE, DESCRIPCION_ANTECEDENTE, FECHA_INGRESO, PERIODO_ESCOLAR, DELETE_FLAG) VALUES (?, ?, ?, ?, ?, 0)");
         $stmtInsertarAntecedentes->bind_param("ssssi", $rutAlumno, $tipoAntecedente, $descripcionAntecedente, $fechaIngreso, $periodoEscolarId);
         $stmtInsertarAntecedentes->execute();
 
@@ -75,6 +85,26 @@ if (isset($_POST['agregar_antecedentes'])) {
     }
 }
 
+
+// Procesar el formulario de eliminación de antecedentes
+if (isset($_POST['eliminar_antecedente'])) {
+    $idAntecedente = $_POST['id_antecedente']; // Asegúrate de que este campo se envía correctamente desde el formulario
+
+    // Actualizar el campo DELETE_FLAG en la base de datos
+    $stmtEliminar = $conn->prepare("UPDATE ANTECEDENTES_EMERGENCIA SET DELETE_FLAG = 1 WHERE ID_ANTECEDENTE = ?");
+    $stmtEliminar->bind_param("i", $idAntecedente);
+    $stmtEliminar->execute();
+
+    if ($stmtEliminar->affected_rows > 0) {
+        $mensaje = "Antecedente eliminado con éxito.";
+    } else {
+        $mensaje = "Error al eliminar el antecedente.";
+    }
+    $stmtEliminar->close();
+
+    // Refrescar los antecedentes para mostrar la tabla actualizada
+    $resultadoAntecedentes = buscarAntecedentes($conn, $_POST['rutAlumno']);
+}
 
 
 
@@ -129,15 +159,15 @@ $rutAlumno = isset($_POST['rutAlumno']) ? $_POST['rutAlumno'] : '';
             <div class="form-row">
                 <div class="form-group col-md-4">
                     <label for="inputNombres">Nombres</label>
-                    <input type="text" name="nombre" class="form-control" id="inputNombres" value="<?php echo isset($contactoEmergencia['NOMBRE']) ? $contactoEmergencia['NOMBRE'] : ''; ?>">
+                    <input type="text" name="nombre" class="form-control to-uppercase" id="inputNombres" value="<?php echo isset($contactoEmergencia['NOMBRE']) ? $contactoEmergencia['NOMBRE'] : ''; ?>">
                 </div>
                 <div class="form-group col-md-4">
                     <label for="inputApellidoPaterno">Ap. Paterno</label>
-                    <input type="text" name="ap_paterno" class="form-control" id="inputApellidoPaterno" value="<?php echo isset($contactoEmergencia['AP_PATERNO']) ? $contactoEmergencia['AP_PATERNO'] : ''; ?>">
+                    <input type="text" name="ap_paterno" class="form-control to-uppercase" id="inputApellidoPaterno" value="<?php echo isset($contactoEmergencia['AP_PATERNO']) ? $contactoEmergencia['AP_PATERNO'] : ''; ?>">
                 </div>
                 <div class="form-group col-md-4">
                     <label for="inputApellidoMaterno">Ap. Materno</label>
-                    <input type="text" name="ap_materno" class="form-control" id="inputApellidoMaterno" value="<?php echo isset($contactoEmergencia['AP_MATERNO']) ? $contactoEmergencia['AP_MATERNO'] : ''; ?>">
+                    <input type="text" name="ap_materno" class="form-control to-uppercase" id="inputApellidoMaterno" value="<?php echo isset($contactoEmergencia['AP_MATERNO']) ? $contactoEmergencia['AP_MATERNO'] : ''; ?>">
                 </div>
             </div>
             <div class="form-row">
@@ -166,33 +196,42 @@ $rutAlumno = isset($_POST['rutAlumno']) ? $_POST['rutAlumno'] : '';
                     <th>Acciones</th>
                 </tr>
             </thead>
-        <tbody>
+            <tbody>
+    <?php if (isset($resultadoAntecedentes) && $resultadoAntecedentes->num_rows > 0): ?>
+        <?php while($antecedente = $resultadoAntecedentes->fetch_assoc()): ?>
             <tr>
-                <td></td>
-                <td></td>
-                <td></td>
+                <td><?php echo htmlspecialchars($antecedente['TIPO_ANTECEDENTE']); ?></td>
+                <td><?php echo htmlspecialchars($antecedente['DESCRIPCION_ANTECEDENTE']); ?></td>
+                <td><?php echo htmlspecialchars($antecedente['FECHA_INGRESO']); ?></td>
                 <td>
                     <form action="" method="post">
-                        <input type="hidden" name="id_antecedente" value="">
+                        <input type="hidden" name="id_antecedente" value="<?php echo $antecedente['ID_ANTECEDENTE']; ?>">
+                        <input type="hidden" name="rutAlumno" value="<?php echo htmlspecialchars($rutAlumno); ?>">
                         <button type="submit" name="eliminar_antecedente" class="btn btn-danger">Eliminar</button>
                     </form>
                 </td>
             </tr>
-        </tbody>
+        <?php endwhile; ?>
+    <?php else: ?>
+        <tr>
+            <td colspan="4">No hay antecedentes médicos registrados.</td>
+        </tr>
+    <?php endif; ?>
+</tbody>
     </table>
         <form method="post">
             <div class="form-group">
                 <label for="inputCategoria">Categoría</label>
                 <select class="form-control" name="categoria" id="inputCategoria" required>
-                    <option value="enfermedad">Enfermedad</option>
-                    <option value="alergia">Alergia</option>
-                    <option value="medicamento">Medicamento</option>
-                    <option value="otro">Otro</option>
+                    <option value="ENFERMEDAD">ENFERMEDAD</option>
+                    <option value="ALERGIA">ALERGIA</option>
+                    <option value="MEDICAMENTO">MEDICAMENTO</option>
+                    <option value="OTRO">OTRO</option>
                 </select>
             </div>
             <div class="form-group">
                 <label for="inputDescripcion">Descripción</label>
-                <input type="text" class="form-control" name="descripcion" id="inputDescripcion" required>
+                <input type="text" class="form-control to-uppercase" name="descripcion" id="inputDescripcion" required>
             </div>
             <div class="form-group">
                 <label for="inputFecha">Fecha</label>
@@ -218,5 +257,12 @@ $rutAlumno = isset($_POST['rutAlumno']) ? $_POST['rutAlumno'] : '';
     </div>
 </div>
 <script>
-
+document.addEventListener('DOMContentLoaded', function() {
+        var inputs = document.querySelectorAll('.to-uppercase');
+        inputs.forEach(function(input) {
+            input.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        });
+    });
 </script>

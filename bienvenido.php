@@ -153,6 +153,9 @@ include 'nav.php';
                 case 'agregar_contacto_emergencia':
                     include 'agregar_contacto_emergencia.php';
                     break;
+                case 'editar_apoderado':
+                    include 'editar_apoderado.php';
+                    break;
                 case 'inicio':
                 default:
                     include 'inicio.php';

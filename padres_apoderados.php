@@ -50,6 +50,23 @@ if (isset($_POST['buscarAlumno'])) {
     $stmt->close();
 }
 
+if (isset($_POST['eliminar_apoderado'])) {
+    $rutApoderado = $_POST['rut_apoderado_eliminar'];
+
+    // Actualizar el DELETE_FLAG del apoderado
+    $stmtEliminar = $conn->prepare("UPDATE APODERADO SET DELETE_FLAG = 1 WHERE RUT_APODERADO = ?");
+    $stmtEliminar->bind_param("s", $rutApoderado);
+    $stmtEliminar->execute();
+
+    // Verificar si se realizó correctamente la actualización
+    if ($stmtEliminar->affected_rows > 0) {
+        $mensaje = "Apoderado eliminado correctamente.";
+    } else {
+        $mensaje = "Error al eliminar el apoderado.";
+    }
+    $stmtEliminar->close();
+}
+
 
 if (isset($_POST['actualizar_datos'])) {
     // Recoge los datos del formulario
@@ -89,7 +106,14 @@ if (isset($_POST['actualizar_datos'])) {
     // Código para manejar mensajes de éxito o error...
 }
 
+// Verifica si existe un mensaje de éxito en la variable de sesión
+if (isset($_SESSION['mensaje_exito'])) {
+    $mensaje = $_SESSION['mensaje_exito'];
+    // Una vez mostrado el mensaje, elimina la variable de sesión
+    unset($_SESSION['mensaje_exito']);
+}
 ?>
+
 
 <?php if (!empty($mensaje)): ?>
     <div class="alert alert-success" role="alert">
@@ -100,26 +124,37 @@ if (isset($_POST['actualizar_datos'])) {
 <h2>Datos padres/apoderados</h2>
     <div class="table-responsive">
         <table class="table">
-            <thead>
-                <tr>
-                    <th>RUT</th>
-                    <th>Nombre completo</th>
-                    <th>Parentesco</th>
-                    <th>Mail</th>
-                    <th>Teléfono</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($apoderados as $apoderado): ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($apoderado['RUT_APODERADO']); ?></td>
-                        <td><?php echo htmlspecialchars($apoderado['NOMBRE']) . " " . htmlspecialchars($apoderado['AP_PATERNO']) . " " . htmlspecialchars($apoderado['AP_MATERNO']); ?></td>
-                        <td><?php echo htmlspecialchars($apoderado['PARENTESCO']); ?></td>
-                        <td><?php echo htmlspecialchars($apoderado['MAIL_PART']); ?></td>
-                        <td><?php echo htmlspecialchars($apoderado['FONO_PART']); ?></td>
-                    </tr>
-                <?php endforeach; ?>
-            </tbody>
+        <thead>
+    <tr>
+        <th>RUT</th>
+        <th>Nombre completo</th>
+        <th>Parentesco</th>
+        <th>Mail</th>
+        <th>Teléfono</th>
+        <th>Editar</th>
+        <th>Eliminar</th>
+    </tr>
+</thead>
+<tbody>
+    <?php foreach ($apoderados as $apoderado): ?>
+        <tr>
+            <td><?php echo htmlspecialchars($apoderado['RUT_APODERADO']); ?></td>
+            <td><?php echo htmlspecialchars($apoderado['NOMBRE']) . " " . htmlspecialchars($apoderado['AP_PATERNO']) . " " . htmlspecialchars($apoderado['AP_MATERNO']); ?></td>
+            <td><?php echo htmlspecialchars($apoderado['PARENTESCO']); ?></td>
+            <td><?php echo htmlspecialchars($apoderado['MAIL_PART']); ?></td>
+            <td><?php echo htmlspecialchars($apoderado['FONO_PART']); ?></td>
+            <td>
+                <button onclick="location.href='editar_apoderado.php?rut=<?php echo $apoderado['RUT_APODERADO']; ?>'" class="btn btn-info">Editar</button>
+            </td>
+            <td>
+                <form method="post">
+                    <input type="hidden" name="rut_apoderado_eliminar" value="<?php echo $apoderado['RUT_APODERADO']; ?>">
+                    <button type="submit" class="btn btn-danger" name="eliminar_apoderado">Eliminar</button>
+                </form>
+            </td>
+        </tr>
+    <?php endforeach; ?>
+</tbody>
         </table>
     </div>
 
