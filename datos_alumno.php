@@ -94,7 +94,7 @@ if (isset($_POST['buscarAlumno'])) {
         $stmtCursoAlumno->close();
 
         // Consulta para obtener las observaciones del alumno
-        $stmtObs = $conn->prepare("SELECT * FROM OBSERVACIONES WHERE RUT_ALUMNO = ?");
+        $stmtObs = $conn->prepare("SELECT * FROM OBSERVACIONES WHERE RUT_ALUMNO = ? AND DELETE_FLAG = 0");
         $stmtObs->bind_param("s", $rutAlumno);
         $stmtObs->execute();
         $resultadoObs = $stmtObs->get_result();
@@ -273,6 +273,26 @@ if (isset($_POST['cambiarEstado'])) {
     $stmtCambiarEstado->close();
 }
 
+if (isset($_POST['eliminar_observacion'])) {
+    // Recoge el ID de la observación a eliminar
+    $idObservacion = $_POST['id_observacion'];
+
+    // Prepara la consulta SQL para marcar la observación como eliminada
+    $stmtEliminar = $conn->prepare("UPDATE OBSERVACIONES SET DELETE_FLAG = 1 WHERE ID = ?");
+    $stmtEliminar->bind_param("i", $idObservacion);
+    $stmtEliminar->execute();
+
+    if ($stmtEliminar->affected_rows > 0) {
+        $mensaje = "Observación eliminada con éxito.";
+    } else {
+        $mensaje = "Error al eliminar la observación.";
+    }
+    $stmtEliminar->close();
+    
+    // No olvides recargar las observaciones para reflejar los cambios
+    // Aquí deberías recargar la variable $observaciones con los datos actualizados de la base de datos
+}
+
 
 ?>
 <?php if (!empty($mensaje)): ?>
@@ -398,7 +418,7 @@ if (isset($_POST['cambiarEstado'])) {
                     <td><?php echo htmlspecialchars($obs['DESCRIPCION']); ?></td>
                     <td><?php echo htmlspecialchars($obs['FECHA']); ?></td>
                     <td>
-                        <form action="" method="post" onsubmit="return confirmDelete();">
+                        <form action="" method="post" >
                             <input type="hidden" name="id_observacion" value="<?php echo $obs['ID']; ?>">
                             <button type="submit" name="eliminar_observacion" class="btn btn-danger">Eliminar</button>
                         </form>
@@ -437,7 +457,7 @@ if (isset($_POST['cambiarEstado'])) {
             });
         });
     });
-function confirmDelete() {
+/* function confirmDelete() {
     return confirm("¿Estás seguro de que quieres eliminar esta observación?");
-}
+} */
 </script>
