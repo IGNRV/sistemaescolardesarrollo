@@ -64,6 +64,14 @@ if (isset($_POST['buscarAlumno'])) {
         $mensaje = "Alumno encontrado.";
         $alumno = $resultado->fetch_assoc();
 
+        // Agregar estas líneas para manejar el estado del alumno
+        $estadoAlumno = '';
+        if ($alumno['STATUS'] == 1) {
+            $estadoAlumno = 'ACTIVADO';
+        } elseif ($alumno['STATUS'] == 2) {
+            $estadoAlumno = 'INACTIVO';
+        }
+
         // Busca la comuna actual del alumno
         $idComunaAlumno = $alumno['ID_COMUNA'];
         $stmtComunaAlumno = $conn->prepare("SELECT NOM_COMUNA FROM COMUNA WHERE ID_COMUNA = ?");
@@ -236,6 +244,34 @@ if (isset($_POST['agregarAlumno'])) {
     $stmtNuevo->close();
 }
 
+if (isset($_POST['cambiarEstado'])) {
+    $rutAlumno = $_POST['rutAlumno']; // Asegúrate de obtener el RUT del alumno
+    $nuevoEstado = ($_POST['estadoActual'] == 'ACTIVADO') ? 2 : 1;
+
+    // Prepara la consulta SQL para cambiar el estado y, si es necesario, actualizar FECHA_RETIRO
+    if ($nuevoEstado == 2) {
+        // Si el nuevo estado es inactivo (2), actualiza también FECHA_RETIRO con la fecha actual
+        $fechaRetiro = date('Y-m-d'); // Obtiene la fecha actual
+        $stmtCambiarEstado = $conn->prepare("UPDATE ALUMNO SET STATUS = ?, FECHA_RETIRO = ? WHERE RUT_ALUMNO = ?");
+        $stmtCambiarEstado->bind_param("sss", $nuevoEstado, $fechaRetiro, $rutAlumno);
+    } else {
+        // Si el estado es activo, simplemente cambia el estado
+        $stmtCambiarEstado = $conn->prepare("UPDATE ALUMNO SET STATUS = ? WHERE RUT_ALUMNO = ?");
+        $stmtCambiarEstado->bind_param("ss", $nuevoEstado, $rutAlumno);
+    }
+    
+    $stmtCambiarEstado->execute();
+
+    if ($stmtCambiarEstado->affected_rows > 0) {
+        $mensaje = "Estado del alumno actualizado.";
+        if ($nuevoEstado == 2) {
+            $mensaje .= " Fecha de retiro establecida.";
+        }
+    } else {
+        $mensaje = "No se pudo cambiar el estado del alumno.";
+    }
+    $stmtCambiarEstado->close();
+}
 
 
 ?>
@@ -258,6 +294,16 @@ if (isset($_POST['agregarAlumno'])) {
             <!-- Formulario de datos del alumno -->
             <form action="" method="post">
                 <input type="hidden" name="rut" value="<?php echo $rut; ?>">
+                <input type="hidden" name="rutAlumno" value="<?php echo htmlspecialchars($rutAlumno); ?>">
+
+                <div class="form-group">
+        <label>Estado:</label>
+        <input type="text" class="form-control" name="estado" value="<?php echo isset($estadoAlumno) ? $estadoAlumno : ''; ?>" readonly>
+        <!-- Agrega un campo oculto para enviar el estado actual -->
+        <input type="hidden" name="estadoActual" value="<?php echo isset($estadoAlumno) ? $estadoAlumno : ''; ?>">
+        <!-- Agrega el botón para cambiar el estado -->
+        <button type="submit" class="btn btn-secondary" name="cambiarEstado">Cambiar Estado</button>
+    </div>
                 <div class="form-group">
         <label>Nombre:</label>
         <input type="text" class="form-control to-uppercase" name="name" value="<?php echo isset($alumno['NOMBRE']) ? $alumno['NOMBRE'] : ''; ?>">
