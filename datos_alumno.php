@@ -75,6 +75,16 @@ if (isset($_POST['buscarAlumno'])) {
         }
         $stmtComunaAlumno->close();
 
+        $idCursoAlumno = $alumno['ID_CURSO'];
+        $stmtCursoAlumno = $conn->prepare("SELECT NOMBRE_CURSO FROM CURSOS WHERE ID_CURSO = ?");
+        $stmtCursoAlumno->bind_param("s", $idCursoAlumno);
+        $stmtCursoAlumno->execute();
+        $resultadoCursoAlumno = $stmtCursoAlumno->get_result();
+        if ($resultadoCursoAlumno->num_rows > 0) {
+            $cursoAlumno = $resultadoCursoAlumno->fetch_assoc()['NOMBRE_CURSO'];
+        }
+        $stmtCursoAlumno->close();
+
         // Consulta para obtener las observaciones del alumno
         $stmtObs = $conn->prepare("SELECT * FROM OBSERVACIONES WHERE RUT_ALUMNO = ?");
         $stmtObs->bind_param("s", $rutAlumno);
@@ -95,6 +105,7 @@ if (isset($_POST['buscarAlumno'])) {
 
 
 // Verifica si se ha enviado el formulario de actualización
+// Verifica si se ha enviado el formulario de actualización
 if (isset($_POST['actualizar'])) {
     // Recoge los datos del formulario
     $nombre = $_POST['name'];
@@ -107,33 +118,46 @@ if (isset($_POST['actualizar'])) {
     $nroCalle = $_POST['nro_calle'];
     $obsDireccion = $_POST['obs_direccion'];
     $villa = $_POST['villa'];
-    $comuna = $_POST['comuna'];
-    $idRegion = $_POST['id_region'];
+    $comunaSeleccionada = $_POST['comuna'];
+    $cursoSeleccionado = $_POST['curso'];
     $mail = $_POST['mail'];
     $fono = $_POST['fono'];
 
+    // Obtén el ID_COMUNA e ID_REGION basados en la comuna seleccionada
+    $stmtComuna = $conn->prepare("SELECT ID_COMUNA, ID_REGION FROM COMUNA WHERE NOM_COMUNA = ?");
+    $stmtComuna->bind_param("s", $comunaSeleccionada);
+    $stmtComuna->execute();
+    $resultadoComuna = $stmtComuna->get_result();
+    if ($resultadoComuna->num_rows > 0) {
+        $filaComuna = $resultadoComuna->fetch_assoc();
+        $idcomuna = $filaComuna['ID_COMUNA'];
+        $idRegion = $filaComuna['ID_REGION'];
+    }
+    $stmtComuna->close();
+
+    // Obtén el ID_CURSO basado en el curso seleccionado
+    $stmtCurso = $conn->prepare("SELECT ID_CURSO FROM CURSOS WHERE NOMBRE_CURSO = ?");
+    $stmtCurso->bind_param("s", $cursoSeleccionado);
+    $stmtCurso->execute();
+    $resultadoCurso = $stmtCurso->get_result();
+    if ($resultadoCurso->num_rows > 0) {
+        $idcurso = $resultadoCurso->fetch_assoc()['ID_CURSO'];
+    }
+    $stmtCurso->close();
+
     // Prepara la consulta SQL para actualizar el alumno
-    $stmt = $conn->prepare("UPDATE ALUMNO SET NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, FECHA_NAC = ?, RDA = ?, CALLE = ?, NRO_CALLE = ?, OBS_DIRECCION = ?, VILLA = ?, COMUNA = ?, ID_REGION = ?, MAIL = ?, FONO = ? WHERE RUT_ALUMNO = ?");
-    $stmt->bind_param("ssssssssssssss", $nombre, $apPaterno, $apMaterno, $fechaNac, $rda, $calle, $nroCalle, $obsDireccion, $villa, $comuna, $idRegion, $mail, $fono, $rutAlumno);
-    $stmt->execute();
+    $stmtActualizar = $conn->prepare("UPDATE ALUMNO SET NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, FECHA_NAC = ?, RDA = ?, CALLE = ?, NRO_CALLE = ?, OBS_DIRECCION = ?, VILLA = ?, COMUNA = ?, ID_REGION = ?, ID_COMUNA = ?, ID_CURSO = ?, MAIL = ?, FONO = ? WHERE RUT_ALUMNO = ?");
+    $stmtActualizar->bind_param("ssssssssssssssss", $nombre, $apPaterno, $apMaterno, $fechaNac, $rda, $calle, $nroCalle, $obsDireccion, $villa, $comunaSeleccionada, $idRegion, $idcomuna, $idcurso, $mail, $fono, $rutAlumno);
+    $stmtActualizar->execute();
 
-    if ($stmt->affected_rows > 0) {
+    if ($stmtActualizar->affected_rows > 0) {
         $mensaje = "Datos del alumno actualizados con éxito.";
-        
-        // Vuelve a buscar los datos del alumno para mostrar los datos actualizados
-        $stmt = $conn->prepare("SELECT * FROM ALUMNO WHERE RUT_ALUMNO = ?");
-        $stmt->bind_param("s", $rutAlumno);
-        $stmt->execute();
-        $resultado = $stmt->get_result();
-
-        if ($resultado->num_rows > 0) {
-            $alumno = $resultado->fetch_assoc();
-        }
     } else {
         $mensaje = "No se pudo actualizar los datos del alumno.";
     }
-    $stmt->close();
+    $stmtActualizar->close();
 }
+
 
 if (isset($_POST['agregar_observacion'])) {
     $categoria = $_POST['categoria'];
@@ -286,10 +310,16 @@ if (isset($_POST['agregarAlumno'])) {
             <?php endforeach; ?>
         </select>
     </div>
-                <div class="form-group">
-                    <label>Curso:</label>
-                    <input type="text" class="form-control to-uppercase" name="curso" value="">
-                </div>
+    <div class="form-group">
+        <label>Curso:</label>
+        <select class="form-control" name="curso">
+            <?php foreach ($cursos as $curso): ?>
+                <option value="<?php echo htmlspecialchars($curso); ?>" <?php echo (isset($cursoAlumno) && $cursoAlumno == $curso) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($curso); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
                 <div class="form-group">
                     <label>Email:</label>
                     <input type="email" class="form-control" name="mail" value="<?php echo isset($alumno['MAIL']) ? $alumno['MAIL'] : ''; ?>">
