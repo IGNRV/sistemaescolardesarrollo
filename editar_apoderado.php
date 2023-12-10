@@ -45,34 +45,45 @@ if (isset($_POST['actualizar_apoderado'])) {
     $obsDireccion = $_POST['obsDireccion'];
     $villaPoblacion = $_POST['villaPoblacion'];
     $comuna = $_POST['comuna'];
-    $idRegion = $_POST['idRegion'];
     $fonoPart = $_POST['telefonoParticular'];
     $mailPart = $_POST['correoElectronicoPersonal'];
     $mailLab = $_POST['correoElectronicoTrabajo'];
     $tutorAcademico = isset($_POST['tutorAcademico']) ? 1 : 0;
 
+    // Necesitas encontrar el ID_REGION correspondiente a esta comuna
+    $consultaRegion = $conn->prepare("SELECT ID_REGION FROM COMUNA WHERE ID_COMUNA = ?");
+    $consultaRegion->bind_param("i", $comuna);
+    $consultaRegion->execute();
+    $resultadoRegion = $consultaRegion->get_result();
 
-    // Actualiza los datos en la base de datos
-    $stmtActualizar = $conn->prepare("UPDATE APODERADO SET PARENTESCO = ?, NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, FECHA_NAC = ?, CALLE = ?, NRO_CALLE = ?, OBS_DIRECCION = ?, VILLA = ?, ID_COMUNA = ?, ID_REGION = ?, FONO_PART = ?, MAIL_PART = ?, MAIL_LAB = ?, TUTOR_ACADEMICO = ? WHERE RUT_APODERADO = ?");
-    $stmtActualizar->bind_param("ssssssssssssssss", $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $comuna, $idRegion, $fonoPart, $mailPart, $mailLab, $tutorAcademico, $rutOriginal);
-    $stmtActualizar->execute();
+    if ($resultadoRegion->num_rows > 0) {
+        $filaRegion = $resultadoRegion->fetch_assoc();
+        $idRegion = $filaRegion['ID_REGION'];
 
-    if ($stmtActualizar->affected_rows > 0) {
-        // Establece el mensaje de éxito en una variable de sesión
-        $_SESSION['mensaje_exito'] = "Datos del apoderado actualizados correctamente.";
-    
-        // Redirige al usuario a la página de padres/apoderados
-        header("Location: /bienvenido.php?page=padres_apoderados");
-        exit; // Asegúrate de llamar a exit después de header para terminar la ejecución del script actual
+        // Actualiza los datos en la base de datos con el ID_COMUNA e ID_REGION
+        $stmtActualizar = $conn->prepare("UPDATE APODERADO SET PARENTESCO = ?, NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, FECHA_NAC = ?, CALLE = ?, NRO_CALLE = ?, OBS_DIRECCION = ?, VILLA = ?, ID_COMUNA = ?, ID_REGION = ?, FONO_PART = ?, MAIL_PART = ?, MAIL_LAB = ?, TUTOR_ACADEMICO = ? WHERE RUT_APODERADO = ?");
+        $stmtActualizar->bind_param("ssssssssssssssss", $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $comuna, $idRegion, $fonoPart, $mailPart, $mailLab, $tutorAcademico, $rutOriginal);
+        $stmtActualizar->execute();
+
+        if ($stmtActualizar->affected_rows > 0) {
+            $_SESSION['mensaje_exito'] = "Datos del apoderado actualizados correctamente.";
+            header("Location: /bienvenido.php?page=padres_apoderados");
+            exit;
+        } else {
+            $mensaje = "Error al actualizar los datos.";
+        }
     } else {
-        $mensaje = "Error al actualizar los datos.";
+        $mensaje = "No se pudo encontrar la región para la comuna seleccionada.";
     }
+    $consultaRegion->close();
     $stmtActualizar->close();
 }
+// ... (resto del código)
+
 
 if ($apoderado != null) {
     // Consulta para obtener todas las comunas
-    $consultaComunas = $conn->query("SELECT ID_COMUNA, NOM_COMUNA FROM COMUNA");
+    $consultaComunas = $conn->query("SELECT ID_COMUNA, ID_REGION, NOM_COMUNA FROM COMUNA");
     $comunas = $consultaComunas->fetch_all(MYSQLI_ASSOC);
 }
 ?>
@@ -152,10 +163,10 @@ if ($apoderado != null) {
         </select>
     </div>
 
-                            <div class="form-group">
+                            <!-- <div class="form-group">
                                 <label for="idRegion">Región</label>
                                 <input type="text" class="form-control" name="idRegion" value="<?php echo $apoderado['ID_REGION']; ?>">
-                            </div>
+                            </div> -->
 
                             <div class="form-group">
                                 <label for="telefonoParticular">Teléfono Particular</label>
