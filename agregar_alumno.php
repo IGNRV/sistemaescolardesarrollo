@@ -195,6 +195,30 @@ if (isset($_POST['agregarAlumno'])) {
 
     if ($stmtNuevo->affected_rows > 0) {
         $mensaje = "Nuevo alumno agregado con éxito.";
+        $idAlumno = $conn->insert_id;
+
+        // Obtén el último ID_PAGO de HISTORIAL_PAGOS
+        $ultimoIDPago = $conn->query("SELECT MAX(ID_PAGO) as ultimoID FROM HISTORIAL_PAGOS")->fetch_assoc()['ultimoID'];
+        $idPago = $ultimoIDPago + 1;
+
+        // Fechas de vencimiento
+        $fechasVencimiento = [
+            "2023-03-05", "2023-04-05", "2023-05-05", 
+            "2023-06-05", "2023-07-05", "2023-08-05", 
+            "2023-09-05", "2023-10-05", "2023-11-05", 
+            "2023-12-05", "2023-12-22"
+        ];
+
+        // Preparar la consulta para insertar en HISTORIAL_PAGOS
+        $stmtHistorial = $conn->prepare("INSERT INTO HISTORIAL_PAGOS (ID_PAGO, ID_ALUMNO, RUT_ALUMNO, CODIGO_PRODUCTO, VALOR_ARANCEL, DESCUENTO_BECA, OTROS_DESCUENTOS, VALOR_A_PAGAR, FECHA_PAGO, MEDIO_PAGO, NRO_MEDIOPAGO, FECHA_SUSCRIPCION, ESTADO_PAGO, FECHA_VENCIMIENTO, FECHA_INGRESO, FECHA_COBRO, ID_PERIODO_ESCOLAR) VALUES (?, ?, ?, 1, 95000, 0, 0, 95000, '2100-01-01', 0, 0, '2100-01-01', 0, ?, ?, '2100-01-01', 1)");
+
+        foreach ($fechasVencimiento as $fechaVencimiento) {
+            $stmtHistorial->bind_param("iisss", $idPago, $idAlumno, $rutAlumnoNuevo, $fechaVencimiento, $fechaActual);
+            $stmtHistorial->execute();
+            $idPago++; // Incrementa el ID_PAGO para la próxima inserción
+        }
+
+        $stmtHistorial->close();
     } else {
         $mensaje = "Error al agregar el nuevo alumno.";
     }
