@@ -13,6 +13,16 @@ if (!isset($_SESSION['EMAIL'])) {
 
 $EMAIL = $_SESSION['EMAIL'];
 
+$periodosEscolares = [];
+$stmtPeriodos = $conn->prepare("SELECT ID, PERIODO FROM PERIODO_ESCOLAR");
+$stmtPeriodos->execute();
+$resultadoPeriodos = $stmtPeriodos->get_result();
+while ($filaPeriodo = $resultadoPeriodos->fetch_assoc()) {
+    $periodosEscolares[] = $filaPeriodo; // Guarda la fila entera que contiene ID y PERIODO
+}
+$stmtPeriodos->close();
+
+
 // Función para buscar los datos del alumno y su contacto de emergencia
 function buscarDatos($conn, $rutAlumno) {
     $stmt = $conn->prepare("SELECT ce.ID_CONTACTO, ce.RUT_APODERADO, a.RUT_ALUMNO, ce.ID_ALUMNO, ce.PARENTESCO, ce.NOMBRE, ce.AP_PATERNO, ce.AP_MATERNO, ce.MAIL_EMERGENCIA, ce.FONO_EMERGENCIA, ce.FECHA_INGRESO, ce.PERIODO_ESCOLAR, ce.STATUS, ce.DELETE_FLAG, ce.DATE_CREATED, ce.DATE_UPDATED FROM ALUMNO AS a LEFT JOIN CONTACTO_EMERGENCIA AS ce ON ce.ID_ALUMNO = a.ID_ALUMNO WHERE a.RUT_ALUMNO = ?");
@@ -35,6 +45,38 @@ if (isset($_POST['buscarAlumno'])) {
         $mensaje = "Alumno no encontrado.";
     }
 }
+
+// Continúa después de la definición de la función buscarDatos
+
+// Procesar el formulario de agregar antecedentes
+// Procesar el formulario de agregar antecedentes
+if (isset($_POST['agregar_antecedentes'])) {
+    // Asegúrate de que el RUT del alumno no sea null
+    if (!empty($_POST['rutAlumno'])) {
+        $rutAlumno = $_POST['rutAlumno'];
+        $tipoAntecedente = $_POST['categoria'];
+        $descripcionAntecedente = $_POST['descripcion'];
+        $fechaIngreso = $_POST['fecha'];
+        $periodoEscolarId = $_POST['periodoEscolar'];
+
+        // Insertar los datos en la tabla ANTECEDENTES_EMERGENCIA
+        $stmtInsertarAntecedentes = $conn->prepare("INSERT INTO ANTECEDENTES_EMERGENCIA (RUT_ALUMNO, TIPO_ANTECEDENTE, DESCRIPCION_ANTECEDENTE, FECHA_INGRESO, PERIODO_ESCOLAR) VALUES (?, ?, ?, ?, ?)");
+        $stmtInsertarAntecedentes->bind_param("ssssi", $rutAlumno, $tipoAntecedente, $descripcionAntecedente, $fechaIngreso, $periodoEscolarId);
+        $stmtInsertarAntecedentes->execute();
+
+        if ($stmtInsertarAntecedentes->affected_rows > 0) {
+            $mensaje = "Antecedente médico agregado con éxito.";
+        } else {
+            $mensaje = "Error al agregar el antecedente médico.";
+        }
+        $stmtInsertarAntecedentes->close();
+    } else {
+        $mensaje = "Debe buscar primero al alumno para agregar antecedentes.";
+    }
+}
+
+
+
 
 // Procesar el formulario de actualización
 if (isset($_POST['actualizar_contacto'])) {
@@ -141,7 +183,12 @@ $rutAlumno = isset($_POST['rutAlumno']) ? $_POST['rutAlumno'] : '';
         <form method="post">
             <div class="form-group">
                 <label for="inputCategoria">Categoría</label>
-                <input type="text" class="form-control" name="categoria" id="inputCategoria" required>
+                <select class="form-control" name="categoria" id="inputCategoria" required>
+                    <option value="enfermedad">Enfermedad</option>
+                    <option value="alergia">Alergia</option>
+                    <option value="medicamento">Medicamento</option>
+                    <option value="otro">Otro</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="inputDescripcion">Descripción</label>
@@ -151,7 +198,21 @@ $rutAlumno = isset($_POST['rutAlumno']) ? $_POST['rutAlumno'] : '';
                 <label for="inputFecha">Fecha</label>
                 <input type="date" class="form-control" name="fecha" id="inputFecha" required>
             </div>
-            <button type="submit" class="btn btn-primary btn-block" name="agregar_antecedentes">AGREGAR ANTECEDENTES MÉDICOS</button>
+            <div class="form-group">
+    <label for="periodoEscolar">Periodo Escolar</label>
+    <select name="periodoEscolar" class="form-control" id="periodoEscolar">
+        <?php foreach ($periodosEscolares as $periodo): ?>
+            <option value="<?php echo htmlspecialchars($periodo['ID']); ?>">
+                <?php echo htmlspecialchars($periodo['PERIODO']); ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+</div>
+<form method="post">
+    <input type="hidden" name="rutAlumno" value="<?php echo htmlspecialchars($rutAlumno); ?>">
+    <!-- Los demás campos de tu formulario -->
+    <button type="submit" class="btn btn-primary btn-block" name="agregar_antecedentes">AGREGAR ANTECEDENTES MÉDICOS</button>
+</form>
         </form>
         <!-- Tabla de antecedentes médicos -->
     </div>

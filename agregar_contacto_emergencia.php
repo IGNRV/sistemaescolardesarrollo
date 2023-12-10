@@ -87,27 +87,27 @@ $rutAlumno = isset($_POST['rutAlumno']) ? $_POST['rutAlumno'] : '';
             <div class="form-row">
                 <div class="form-group col-md-12">
                     <label for="inputRUT">RUT (Con guion)</label>
-                    <input type="text" name="rut" class="form-control" id="inputRUT" value="">
+                    <input type="text" name="rut" class="form-control to-uppercase" id="inputRUT" value="">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group col-md-4">
                     <label for="inputNombres">Nombres</label>
-                    <input type="text" name="nombre" class="form-control" id="inputNombres" value="">
+                    <input type="text" name="nombre" class="form-control to-uppercase" id="inputNombres" value="">
                 </div>
                 <div class="form-group col-md-4">
                     <label for="inputApellidoPaterno">Ap. Paterno</label>
-                    <input type="text" name="ap_paterno" class="form-control" id="inputApellidoPaterno" value="">
+                    <input type="text" name="ap_paterno" class="form-control to-uppercase" id="inputApellidoPaterno" value="">
                 </div>
                 <div class="form-group col-md-4">
                     <label for="inputApellidoMaterno">Ap. Materno</label>
-                    <input type="text" name="ap_materno" class="form-control" id="inputApellidoMaterno" value="">
+                    <input type="text" name="ap_materno" class="form-control to-uppercase" id="inputApellidoMaterno" value="">
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group col-md-6">
                     <label for="inputTelefono">Teléfono</label>
-                    <input type="text" name="fono_emergencia" class="form-control" id="inputTelefono" value="">
+                    <input type="text" name="fono_emergencia" class="form-control to-uppercase" id="inputTelefono" value="">
                 </div>
                 <div class="form-group col-md-6">
                     <label for="inputEmail">Correo Electrónico</label>
@@ -115,7 +115,7 @@ $rutAlumno = isset($_POST['rutAlumno']) ? $_POST['rutAlumno'] : '';
                 </div>
                 <div class="form-group col-md-6">
                     <label for="parentesco">Parentesco</label>
-                    <input type="text" name="parentesco" class="form-control" id="parentesco" value="">
+                    <input type="text" name="parentesco" class="form-control to-uppercase" id="parentesco" value="">
                 </div>
             </div>
             <div class="form-row">
@@ -146,5 +146,12 @@ $rutAlumno = isset($_POST['rutAlumno']) ? $_POST['rutAlumno'] : '';
 
 
 <script>
-
+document.addEventListener('DOMContentLoaded', function() {
+        var inputs = document.querySelectorAll('.to-uppercase');
+        inputs.forEach(function(input) {
+            input.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        });
+    });
 </script>

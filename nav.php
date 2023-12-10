@@ -17,9 +17,18 @@
                     <a class="dropdown-item" href="bienvenido.php?page=datos_alumno">Ver Datos</a>
                     <a class="dropdown-item" href="bienvenido.php?page=agregar_alumno">Agregar Alumno</a>
                 </div>
-            </li>
-        <li class="nav-item">
+        </li>
+        <!-- <li class="nav-item">
             <a class="nav-link" href="bienvenido.php?page=emergencias">Emergencias</a>
+        </li> -->
+        <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="datosAlumnoDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Emergencias
+                </a>
+                <div class="dropdown-menu" aria-labelledby="datosAlumnoDropdown">
+                    <a class="dropdown-item" href="bienvenido.php?page=emergencias">Ver Datos</a>
+                    <a class="dropdown-item" href="bienvenido.php?page=agregar_contacto_emergencia">Agregar contacto de emergencias</a>
+                </div>
         </li>
         <li class="nav-item">
     <a class="nav-link" href="bienvenido.php?page=padres_apoderados">Padres/Apoderados</a>
