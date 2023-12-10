@@ -69,6 +69,12 @@ if (isset($_POST['actualizar_apoderado'])) {
     }
     $stmtActualizar->close();
 }
+
+if ($apoderado != null) {
+    // Consulta para obtener todas las comunas
+    $consultaComunas = $conn->query("SELECT ID_COMUNA, NOM_COMUNA FROM COMUNA");
+    $comunas = $consultaComunas->fetch_all(MYSQLI_ASSOC);
+}
 ?>
 <head>
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
@@ -136,9 +142,15 @@ if (isset($_POST['actualizar_apoderado'])) {
                             </div>
 
                             <div class="form-group">
-                                <label for="comuna">Comuna</label>
-                                <input type="text" class="form-control" name="comuna" value="<?php echo $apoderado['ID_COMUNA']; ?>">
-                            </div>
+        <label for="comuna">Comuna</label>
+        <select class="form-control" name="comuna" id="comuna">
+            <?php foreach ($comunas as $comuna): ?>
+                <option value="<?php echo htmlspecialchars($comuna['ID_COMUNA']); ?>" <?php echo $comuna['ID_COMUNA'] == $apoderado['ID_COMUNA'] ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($comuna['NOM_COMUNA']); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
 
                             <div class="form-group">
                                 <label for="idRegion">Región</label>

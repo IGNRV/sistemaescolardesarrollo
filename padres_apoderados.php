@@ -15,6 +15,9 @@ $resultadoUsuario = $conn->query($queryUsuario);
 
 $apoderados = []; // Array para almacenar los datos de los apoderados
 
+$consultaComunas = $conn->query("SELECT ID_COMUNA, ID_REGION, NOM_COMUNA FROM COMUNA");
+$comunas = $consultaComunas->fetch_all(MYSQLI_ASSOC);
+
 if (isset($_POST['buscarAlumno'])) {
     $rutAlumno = $_POST['rutAlumno'];
 
@@ -28,7 +31,8 @@ if (isset($_POST['buscarAlumno'])) {
                                 ap.AP_MATERNO,
                                 ap.PARENTESCO,
                                 ap.MAIL_PART,
-                                ap.FONO_PART
+                                ap.FONO_PART,
+                                ap.DELETE_FLAG
                             FROM
                                 ALUMNO AS a
                                     LEFT JOIN
@@ -36,7 +40,7 @@ if (isset($_POST['buscarAlumno'])) {
                                     LEFT JOIN
                                 APODERADO AS ap ON ap.ID_APODERADO = raa.ID_APODERADO
                             WHERE
-                                a.RUT_ALUMNO = ?");
+                                a.RUT_ALUMNO = ? AND ap.DELETE_FLAG = 0");
     $stmt->bind_param("s", $rutAlumno);
     $stmt->execute();
     $resultado = $stmt->get_result();
@@ -70,6 +74,7 @@ if (isset($_POST['eliminar_apoderado'])) {
 
 if (isset($_POST['actualizar_datos'])) {
     // Recoge los datos del formulario
+    $rutAlumno = $_POST['rutAlumno'];
     $rut = $_POST['rut'];
     $parentesco = $_POST['parentesco'];
     $nombre = $_POST['nombre'];
@@ -80,31 +85,59 @@ if (isset($_POST['actualizar_datos'])) {
     $nCalle = $_POST['n_calle'];
     $obsDireccion = $_POST['obsDireccion'];
     $villaPoblacion = $_POST['villaPoblacion'];
-    $comuna = $_POST['comuna'];
-    $idRegion = $_POST['idRegion'];
+    $idComunaSeleccionada = $_POST['comuna']; // ID de la comuna seleccionada
     $telefonoParticular = $_POST['telefonoParticular'];
     $correoElectronicoPersonal = $_POST['correoElectronicoPersonal'];
     $correoElectronicoTrabajo = $_POST['correoElectronicoTrabajo'];
     $tutorAcademico = isset($_POST['tutorAcademico']) ? 1 : 0;
 
-    // Inserta o actualiza los datos en la tabla APODERADO
-    // Aquí debes manejar la lógica para determinar si debes insertar un nuevo registro
-    // o actualizar uno existente. Este es un ejemplo de inserción:
-    $stmt = $conn->prepare("INSERT INTO APODERADO (RUT_APODERADO, PARENTESCO, NOMBRE, AP_PATERNO, AP_MATERNO, FECHA_NAC, CALLE, NRO_CALLE, OBS_DIRECCION, VILLA, ID_COMUNA, ID_REGION, FONO_PART, MAIL_PART, MAIL_LAB, TUTOR_ACADEMICO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sssssssssssssssi", $rut, $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $comuna, $idRegion, $telefonoParticular, $correoElectronicoPersonal, $correoElectronicoTrabajo, $tutorAcademico);
-    $stmt->execute();
+    // Buscar ID_REGION correspondiente a ID_COMUNA seleccionada
+    $consultaRegion = $conn->prepare("SELECT ID_REGION FROM COMUNA WHERE ID_COMUNA = ?");
+    $consultaRegion->bind_param("i", $idComunaSeleccionada);
+    $consultaRegion->execute();
+    $resultadoRegion = $consultaRegion->get_result();
+    $filaRegion = $resultadoRegion->fetch_assoc();
+    $idRegionCorrespondiente = $filaRegion['ID_REGION'];
+    
 
-    // Luego, obtén el ID del apoderado insertado
-    $idApoderado = $conn->insert_id;
+    if (!empty($rutAlumno)) {
+        $stmtAlumno = $conn->prepare("SELECT ID_ALUMNO FROM ALUMNO WHERE RUT_ALUMNO = ?");
+        $stmtAlumno->bind_param("s", $rutAlumno);
+        $stmtAlumno->execute();
+        $resultadoAlumno = $stmtAlumno->get_result();
 
-    // Inserta los datos en la tabla REL_ALUM_APOD
-    $tipoRelacion = $parentesco == 'MADRE' ? 2 : ($parentesco == 'PADRE' ? 1 : 0); // Ejemplo de asignación de tipo de relación
-    $stmtRel = $conn->prepare("INSERT INTO REL_ALUM_APOD (ID_ALUMNO, ID_APODERADO, STATUS, DELETE_FLAG, TIPO_RELACION) VALUES ((SELECT ID_ALUMNO FROM ALUMNO WHERE RUT_ALUMNO = ?), ?, 1, 0, ?)");
-    $stmtRel->bind_param("sii", $rutAlumno, $idApoderado, $tipoRelacion);
-    $stmtRel->execute();
+        if ($resultadoAlumno->num_rows > 0) {
+            $filaAlumno = $resultadoAlumno->fetch_assoc();
+            $idAlumno = $filaAlumno['ID_ALUMNO'];
+            $fechaActual = date("Y-m-d H:i:s");
+            $fechaActualizacion = date("Y-m-d H:i:s");
 
-    // Código para manejar mensajes de éxito o error...
+
+            // Inserta o actualiza en la tabla APODERADO
+            $stmt = $conn->prepare("INSERT INTO APODERADO (RUT_APODERADO, PARENTESCO, NOMBRE, AP_PATERNO, AP_MATERNO, FECHA_NAC, CALLE, NRO_CALLE, OBS_DIRECCION, VILLA, ID_COMUNA, ID_REGION, FONO_PART, MAIL_PART, MAIL_LAB, TUTOR_ACADEMICO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssssssssiiissi", $rut, $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $idComunaSeleccionada, $idRegionCorrespondiente, $telefonoParticular, $correoElectronicoPersonal, $correoElectronicoTrabajo, $tutorAcademico);
+            $stmt->execute();
+            $idApoderado = $conn->insert_id;
+
+            $ultimoIdRelacion = $conn->query("SELECT MAX(ID_RELACION) AS ultimo_id FROM REL_ALUM_APOD")->fetch_assoc();
+            $nuevoIdRelacion = $ultimoIdRelacion['ultimo_id'] + 1;
+            $tipoRelacion = $parentesco == 'MADRE' ? 2 : ($parentesco == 'PADRE' ? 1 : 0); // Ejemplo de asignación de tipo de relación
+
+
+            $stmtRel = $conn->prepare("INSERT INTO REL_ALUM_APOD (ID_RELACION, ID_ALUMNO, ID_APODERADO, STATUS, DELETE_FLAG, TIPO_RELACION, DATE_CREATED, DATE_UPDATED) VALUES (?, ?, ?, 1, 0, ?, ?, ?)");
+            $stmtRel->bind_param("iiiiss", $nuevoIdRelacion, $idAlumno, $idApoderado, $tipoRelacion, $fechaActual, $fechaActualizacion);
+            $stmtRel->execute();
+
+            $_SESSION['mensaje_exito'] = "Datos del apoderado actualizados correctamente.";
+        } else {
+            $mensaje = "Alumno no encontrado para el RUT proporcionado.";
+        }
+        $stmtAlumno->close();
+    } else {
+        $mensaje = "RUT del alumno no proporcionado.";
+    }
 }
+
 
 // Verifica si existe un mensaje de éxito en la variable de sesión
 if (isset($_SESSION['mensaje_exito'])) {
@@ -170,6 +203,8 @@ if (isset($_SESSION['mensaje_exito'])) {
     
     <h3>Información de padres/apoderados</h3>
     <form method="post">
+    <input type="hidden" name="rutAlumno" value="<?php echo htmlspecialchars($rutAlumno); ?>">
+
         <div class="form-group">
             <label for="rut">RUT</label>
             <input type="text" class="form-control" name="rut" id="rut" maxlength="10">
@@ -212,12 +247,18 @@ if (isset($_SESSION['mensaje_exito'])) {
         </div>
         <div class="form-group">
             <label for="comuna">Comuna</label>
-            <input type="text" class="form-control" name="comuna">
+            <select class="form-control" name="comuna" id="comuna">
+                <?php foreach ($comunas as $comuna): ?>
+                    <option value="<?php echo htmlspecialchars($comuna['ID_COMUNA']); ?>">
+                        <?php echo htmlspecialchars($comuna['NOM_COMUNA']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
         </div>
-        <div class="form-group">
+        <!-- <div class="form-group">
             <label for="ciudad">Region</label>
             <input type="text" class="form-control" name="idRegion">
-        </div>
+        </div> -->
         <div class="form-group">
             <label for="telefonoParticular">Teléfono Particular</label>
             <input type="tel" class="form-control" name="telefonoParticular">
