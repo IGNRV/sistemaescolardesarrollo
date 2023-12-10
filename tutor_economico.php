@@ -1,7 +1,13 @@
 <?php
-ini_set('display_errors', 1);
+
+/* ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+ */
+// Verifica si existe un mensaje en la sesión y guárdalo en una variable
+$mensaje = isset($_SESSION['mensaje']) ? $_SESSION['mensaje'] : '';
+unset($_SESSION['mensaje']); // Limpia el mensaje para que no se muestre de nuevo en futuras cargas de página
+
 
 if (!isset($_SESSION['EMAIL'])) {
     header('Location: login.php');
@@ -31,6 +37,10 @@ $comuna = '';
 $ciudad = '';
 $correoPersonal = '';
 $correoTrabajo = '';
+
+// Asegúrate de que tienes esta consulta para obtener las comunas
+$consultaComunas = $conn->query("SELECT ID_COMUNA, NOM_COMUNA FROM COMUNA");
+$comunas = $consultaComunas->fetch_all(MYSQLI_ASSOC);
 
 if (isset($_POST['buscarAlumno'])) {
     $rutAlumno = $_POST['rutAlumno'];
@@ -99,7 +109,18 @@ if (!empty($apoderados)) {
     $correoPersonal = $apoderados[0]['MAIL_PART'];
     $correoTrabajo = $apoderados[0]['MAIL_LAB'];
     $periodoescolar = $apoderados[0]['PERIODO_ESCOLAR'];
+    $idComunaApoderado = $apoderados[0]['ID_COMUNA'] ?? null;
 
+}
+
+$mediosDePago = [];
+if (!empty($rutTutor)) {
+    $stmtMediosDePago = $conn->prepare("SELECT MEDIO_PAGO, BANCO_EMISOR, FECHA_SUSCRIPCION, ESTADO_MP, NRO_MEDIOPAGO FROM MEDIOS_DE_PAGO WHERE RUT_PAGADOR = ?");
+    $stmtMediosDePago->bind_param("s", $rutTutor);
+    $stmtMediosDePago->execute();
+    $resultadoMediosDePago = $stmtMediosDePago->get_result();
+    $mediosDePago = $resultadoMediosDePago->fetch_all(MYSQLI_ASSOC);
+    $stmtMediosDePago->close();
 }
 
 
@@ -137,6 +158,11 @@ if (isset($_POST['INGRESAR_DATOS'])) {
     }
     $stmt->close();
 }
+
+if (!empty($mensaje)) {
+    echo '<div class="alert alert-success">' . htmlspecialchars($mensaje) . '</div>';
+}
+
 
 
 
@@ -193,13 +219,20 @@ if (isset($_POST['INGRESAR_DATOS'])) {
             <input type="text" class="form-control" name="villa_poblacion" id="villaPoblacionTutor" value="<?php echo htmlspecialchars($villaPoblacion); ?>">
         </div>
         <div class="form-group">
-            <label for="comunaTutor">Comuna</label>
-            <input type="text" class="form-control" name="comuna" id="comunaTutor" value="<?php echo htmlspecialchars($comuna); ?>">
-        </div>
-        <div class="form-group">
+    <label for="comunaTutor">Comuna</label>
+    <select class="form-control" name="comuna" id="comunaTutor">
+        <?php foreach ($comunas as $comuna): ?>
+            <option value="<?php echo htmlspecialchars($comuna['ID_COMUNA']); ?>" <?php if ($comuna['ID_COMUNA'] == $idComunaApoderado) echo 'selected'; ?>>
+                <?php echo htmlspecialchars($comuna['NOM_COMUNA']); ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+</div>
+
+        <!-- <div class="form-group">
             <label for="ciudadTutor">Ciudad</label>
             <input type="text" class="form-control" name="ciudad" id="ciudadTutor" value="<?php echo htmlspecialchars($ciudad); ?>">
-        </div>
+        </div> -->
         <div class="form-group">
             <label for="correoPersonalTutor">Correo Electrónico Personal</label>
             <input type="email" class="form-control" name="correo_electronico_particular" id="correoPersonalTutor" value="<?php echo htmlspecialchars($correoPersonal); ?>">
@@ -213,25 +246,47 @@ if (isset($_POST['INGRESAR_DATOS'])) {
     </form>
 
     <h3>Medios de pago suscritos</h3>
-    <table class="table">
-        <thead>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Tipo Medio de Pago</th>
+            <th>Banco Emisor</th>
+            <th>Fecha suscripción</th>
+            <th>Estado</th>
+            <th>Acción</th> <!-- Nueva columna para las acciones -->
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($mediosDePago as $medio): ?>
             <tr>
-                <th>Tipo Medio de Pago</th>
-                <th>Banco Emisor</th>
-                <th>Fecha suscripción</th>
-                <th>Estado</th>
+                <td><?php echo htmlspecialchars($medio['MEDIO_PAGO']); ?></td>
+                <td><?php echo htmlspecialchars($medio['BANCO_EMISOR']); ?></td>
+                <td><?php echo htmlspecialchars($medio['FECHA_SUSCRIPCION']); ?></td>
+                <td>
+                    <?php 
+                    // Verifica el estado y muestra el texto correspondiente
+                    echo $medio['ESTADO_MP'] == 1 ? "ACTIVO" : ($medio['ESTADO_MP'] == 2 ? "INACTIVO" : "DESCONOCIDO"); 
+                    ?>
+                </td>
+                <td>
+                    <form method="post" action="procesar_cambio_estado.php"> <!-- Cambia 'procesar_cambio_estado.php' por tu script de procesamiento -->
+                        <input type="hidden" name="nroMedioPago" value="<?php echo $medio['NRO_MEDIOPAGO']; ?>">
+                        <input type="hidden" name="estadoActual" value="<?php echo $medio['ESTADO_MP']; ?>">
+                        <button type="submit" name="cambiarEstado" class="btn btn-<?php echo $medio['ESTADO_MP'] == 1 ? 'warning' : 'success'; ?>">
+                            <?php echo $medio['ESTADO_MP'] == 1 ? 'Desactivar' : 'Activar'; ?>
+                        </button>
+                    </form>
+                </td>
             </tr>
-        </thead>
-        <tbody>
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-        </tbody>
-    </table>
-    <button type="button" class="btn btn-primary btn-block custom-button">VER DETALLE</button>
+        <?php endforeach; ?>
+        <?php if (empty($mediosDePago)): ?>
+            <tr>
+                <td colspan="5">No se han encontrado medios de pago suscritos.</td>
+            </tr>
+        <?php endif; ?>
+    </tbody>
+</table>
+
     <form method="post">
         <div class="form-group">
             <label for="medioPago">Medio de Pago</label>
