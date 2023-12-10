@@ -7,6 +7,7 @@
         <a href="bienvenido.php?page=datos_alumno" class="btn btn-outline-primary custom-button m-2">Datos Alumno</a>
         <a href="bienvenido.php?page=agregar_alumno" class="btn btn-outline-primary custom-button m-2">Agregar Alumno</a>
         <a href="bienvenido.php?page=emergencias" class="btn btn-outline-primary custom-button m-2">Emergencias</a>
+        <a href="bienvenido.php?page=agregar_contacto_emergencia" class="btn btn-outline-primary custom-button m-2">Agregar contacto de emergencia</a>
         <a href="bienvenido.php?page=padres_apoderados" class="btn btn-outline-primary custom-button m-2">Padres/Apoderados</a>
         <a href="bienvenido.php?page=tutor_economico" class="btn btn-outline-primary custom-button m-2">Tutor Económico</a>
         <a href="bienvenido.php?page=pago_electronico" class="btn btn-outline-primary custom-button m-2">Pago Electrónico</a>
