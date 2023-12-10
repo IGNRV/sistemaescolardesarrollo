@@ -14,6 +14,8 @@ $queryUsuario = "SELECT ID FROM USERS WHERE EMAIL = '$EMAIL'";
 $resultadoUsuario = $conn->query($queryUsuario);
 
 $apoderados = []; // Array para almacenar los datos de los apoderados
+$rutAlumno = ''; // Inicializa la variable $rutAlumno
+
 
 $consultaComunas = $conn->query("SELECT ID_COMUNA, ID_REGION, NOM_COMUNA FROM COMUNA");
 $comunas = $consultaComunas->fetch_all(MYSQLI_ASSOC);
@@ -196,7 +198,7 @@ if (isset($_SESSION['mensaje_exito'])) {
         <div class="form-group">
             <label for="rutAlumno">Rut del alumno:</label>
             <!-- Utiliza el valor de $rutAlumno para mantener el valor después de enviar el formulario -->
-            <input type="text" class="form-control" id="rutAlumno" name="rutAlumno" placeholder="Ingrese RUT del alumno" value="<?php echo htmlspecialchars($rutAlumno); ?>">
+            <input type="text" class="form-control" id="rutAlumno" name="rutAlumno" placeholder="Ingrese RUT del alumno" value="<?php echo isset($rutAlumno) ? htmlspecialchars($rutAlumno) : ''; ?>">
             <button type="submit" class="btn btn-primary custom-button mt-3" name="buscarAlumno">Buscar</button>
         </div>
     </form>
@@ -275,6 +277,6 @@ if (isset($_SESSION['mensaje_exito'])) {
             <label for="tutorAcademico">Tutor académico</label>
             <input type="checkbox" id="tutorAcademico" name="tutorAcademico" value="1">
         </div>
-        <button type="submit" class="btn btn-primary btn-block custom-button" name="actualizar_datos">ACTUALIZAR DATOS</button>
+        <button type="submit" class="btn btn-primary btn-block custom-button" name="actualizar_datos">AGREGAR APODERADO</button>
 </form>
 </div>
