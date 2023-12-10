@@ -147,6 +147,9 @@ include 'nav.php';
                 case 'cuadratura_caja':
                     include 'cuadratura_caja.php';
                     break;
+                case 'agregar_alumno':
+                    include 'agregar_alumno.php';
+                    break;
 
                 case 'inicio':
                 default:

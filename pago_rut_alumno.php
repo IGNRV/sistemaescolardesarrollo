@@ -7,7 +7,7 @@ $mensaje = '';
 
 if (isset($_POST['btnBuscarAlumno'])) {
     $rutAlumno = $_POST['rutAlumno'];
-    $yearActual = date('Y');
+    $fechaActual = date('Y-m-d');
 
     // Consulta a la base de datos
     $stmt = $conn->prepare("SELECT 
@@ -42,29 +42,35 @@ WHERE
     a.RUT_ALUMNO = ?
 ORDER BY
     hp.FECHA_VENCIMIENTO ASC"); // Ordenar por FECHA_VENCIMIENTO ascendente
-$stmt->bind_param("s", $rutAlumno);
-$stmt->execute();
-$resultado = $stmt->get_result();
+    $stmt->bind_param("s", $rutAlumno);
+    $stmt->execute();
+    $resultado = $stmt->get_result();
 
-if ($resultado->num_rows > 0) {
-    while ($fila = $resultado->fetch_assoc()) {
-        $fechaVencimiento = new DateTime($fila['FECHA_VENCIMIENTO']);
-        $yearVencimiento = $fechaVencimiento->format('Y');
-
-        if ($yearVencimiento < $yearActual) {
-            // Agregar a saldo del período anterior
-            $saldoPeriodoAnterior[] = $fila;
-        } else {
-            // Agregar a cuotas del período actual
-            $cuotasPeriodoActual[] = $fila;
+    if ($resultado->num_rows > 0) {
+        while ($fila = $resultado->fetch_assoc()) {
+            $fechaVencimiento = new DateTime($fila['FECHA_VENCIMIENTO']);
+            if ($fechaVencimiento < new DateTime($fechaActual) && $fila['ESTADO_PAGO'] == 0) {
+                // Actualizar el estado a vencido (1) si la fecha de vencimiento es anterior a la fecha actual
+                $updateStmt = $conn->prepare("UPDATE HISTORIAL_PAGOS SET ESTADO_PAGO = 1 WHERE ID_PAGO = ?");
+                $updateStmt->bind_param("i", $fila['ID_PAGO']);
+                $updateStmt->execute();
+                $updateStmt->close();
+                $fila['ESTADO_PAGO'] = 1;
+            }
+            
+            if ($fechaVencimiento->format('Y') < date('Y')) {
+                // Agregar a saldo del período anterior
+                $saldoPeriodoAnterior[] = $fila;
+            } else {
+                // Agregar a cuotas del período actual
+                $cuotasPeriodoActual[] = $fila;
+            }
         }
+        $mensaje = "Datos encontrados.";
+    } else {
+        $mensaje = "No se encontraron datos para el RUT ingresado.";
     }
-    $mensaje = "Datos encontrados.";
-} else {
-    $mensaje = "No se encontraron datos para el RUT ingresado.";
-}
-$stmt->close();
-
+    $stmt->close();
 }
 ?>
 <!DOCTYPE html>
@@ -133,7 +139,15 @@ $stmt->close();
                     <td><?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?></td>
                     <td><?php echo htmlspecialchars($pago['MEDIO_PAGO']); ?></td>
                     <td><?php echo htmlspecialchars($pago['FECHA_PAGO']); ?></td>
-                    <td><?php echo htmlspecialchars($pago['ESTADO_PAGO']); ?></td>
+                    <td>
+                        <?php if ($pago['ESTADO_PAGO'] == 0): ?>
+                            VIGENTE
+                        <?php elseif ($pago['ESTADO_PAGO'] == 1): ?>
+                            VENCIDA
+                        <?php elseif ($pago['ESTADO_PAGO'] == 2): ?>
+                            PAGADA
+                        <?php endif; ?>
+                    </td>
                     <td>
                         <?php if ($pago['ESTADO_PAGO'] != 2): ?>
                             <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>">
@@ -170,7 +184,15 @@ $stmt->close();
                     <td><?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?></td>
                     <td><?php echo htmlspecialchars($pago['MEDIO_PAGO']); ?></td>
                     <td><?php echo htmlspecialchars($pago['FECHA_PAGO']); ?></td>
-                    <td><?php echo htmlspecialchars($pago['ESTADO_PAGO']); ?></td>
+                    <td>
+                        <?php if ($pago['ESTADO_PAGO'] == 0): ?>
+                            VIGENTE
+                        <?php elseif ($pago['ESTADO_PAGO'] == 1): ?>
+                            VENCIDA
+                        <?php elseif ($pago['ESTADO_PAGO'] == 2): ?>
+                            PAGADA
+                        <?php endif; ?>
+                    </td>
                     <td>
                         <?php if ($pago['ESTADO_PAGO'] != 2): ?>
                             <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>">
@@ -184,9 +206,9 @@ $stmt->close();
     </table>
 </div>
 
-                        <div>
+                        <!-- <div>
                             <button type="button" class="btn btn-primary" id="btnSeleccionarValores">Seleccionar valores</button>
-                        </div>
+                        </div> -->
 
                         <!-- Sección "Total a Pagar $" -->
                         <div class="mt-4">
