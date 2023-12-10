@@ -35,6 +35,20 @@ if ($resultadoComunas->num_rows > 0) {
 }
 $stmtComunas->close();
 
+// Obtener los periodos escolares
+$periodosEscolares = [];
+$stmtPeriodos = $conn->prepare("SELECT ID, PERIODO FROM PERIODO_ESCOLAR");
+$stmtPeriodos->execute();
+$resultadoPeriodos = $stmtPeriodos->get_result();
+
+if ($resultadoPeriodos->num_rows > 0) {
+    while ($filaPeriodo = $resultadoPeriodos->fetch_assoc()) {
+        $periodosEscolares[$filaPeriodo['ID']] = $filaPeriodo['PERIODO'];
+    }
+}
+$stmtPeriodos->close();
+
+
 // Verifica si el usuario está logueado y obtiene su id
 if (!isset($_SESSION['EMAIL'])) {
     header('Location: login.php');
@@ -168,7 +182,7 @@ if (isset($_POST['agregarAlumno'])) {
     $fechaingreso = strtoupper($_POST['fechaingreso']);
     $mailNuevo = $_POST['mailNuevo'];
 
-    $periodoescolar = 2;
+    $periodoescolar = $_POST['periodoEscolar'];
     $status = 1;
     $deleteflag = 1;
 
@@ -192,7 +206,6 @@ if (isset($_POST['agregarAlumno'])) {
     $stmtNuevo->bind_param("ssssssssssssssssssssss", $nombreNuevo, $apPaternoNuevo, $apMaternoNuevo, $fechaNacNuevo, $rutAlumnoNuevo, $rdaNuevo, $calleNuevo, $nroCalleNuevo, $obsDireccionNuevo, $villaNuevo, $comunaSeleccionada, $idRegion, $mailNuevo, $fonoNuevo, $cursoSeleccionado, $idcurso, $idcomuna, $fotoalumno, $fechaingreso, $periodoescolar, $status, $deleteflag);
     $stmtNuevo->execute();
 
-
     if ($stmtNuevo->affected_rows > 0) {
         $mensaje = "Nuevo alumno agregado con éxito.";
         $idAlumno = $conn->insert_id;
@@ -202,11 +215,15 @@ if (isset($_POST['agregarAlumno'])) {
         $idPago = $ultimoIDPago + 1;
 
         // Fechas de vencimiento
+        $periodoEscolarID = $_POST['periodoEscolar'];
+        $anioPeriodoEscolar = substr($periodosEscolares[$periodoEscolarID], 0, 4); // Obtén el año del periodo escolar seleccionado
+    
+        // Fechas de vencimiento con el año ajustado
         $fechasVencimiento = [
-            "2023-03-05", "2023-04-05", "2023-05-05", 
-            "2023-06-05", "2023-07-05", "2023-08-05", 
-            "2023-09-05", "2023-10-05", "2023-11-05", 
-            "2023-12-05", "2023-12-22"
+            "$anioPeriodoEscolar-03-05", "$anioPeriodoEscolar-04-05", "$anioPeriodoEscolar-05-05", 
+            "$anioPeriodoEscolar-06-05", "$anioPeriodoEscolar-07-05", "$anioPeriodoEscolar-08-05", 
+            "$anioPeriodoEscolar-09-05", "$anioPeriodoEscolar-10-05", "$anioPeriodoEscolar-11-05", 
+            "$anioPeriodoEscolar-12-05", "$anioPeriodoEscolar-12-22"
         ];
 
         // Preparar la consulta para insertar en HISTORIAL_PAGOS
@@ -306,6 +323,16 @@ if (isset($_POST['agregarAlumno'])) {
             <?php endforeach; ?>
         </select>
     </div>
+    <div class="form-group">
+    <label>Periodo Escolar:</label>
+    <select class="form-control" name="periodoEscolar">
+        <?php foreach ($periodosEscolares as $id => $periodo): ?>
+            <option value="<?php echo htmlspecialchars($id); ?>">
+                <?php echo htmlspecialchars($periodo); ?>
+            </option>
+        <?php endforeach; ?>
+    </select>
+</div>
     <div class="form-group">
         <label>Foto alumno:</label>
         <input type="text" class="form-control" name="fotoalumno">
