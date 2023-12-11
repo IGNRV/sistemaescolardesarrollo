@@ -4,6 +4,7 @@
     <hr class="my-4">
     <div class="button-container d-flex flex-wrap justify-content-center">
         <a href="bienvenido.php?page=inicio" class="btn btn-outline-primary custom-button m-2">Inicio</a>
+        <a href="registro.php" class="btn btn-outline-primary custom-button m-2">Registro de Usuarios</a>
         <a href="bienvenido.php?page=datos_alumno" class="btn btn-outline-primary custom-button m-2">Datos Alumno</a>
         <a href="bienvenido.php?page=agregar_alumno" class="btn btn-outline-primary custom-button m-2">Agregar Alumno</a>
         <a href="bienvenido.php?page=emergencias" class="btn btn-outline-primary custom-button m-2">Emergencias</a>

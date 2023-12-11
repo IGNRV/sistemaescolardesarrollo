@@ -159,9 +159,9 @@ include 'nav.php';
                 case 'pago_cheque_anual':
                     include 'pago_cheque_anual.php';
                     break;
-                case 'registro':
+                /* case 'registro':
                     include 'registro.php';
-                    break;
+                    break; */
                 case 'inicio':
                 default:
                     include 'inicio.php';

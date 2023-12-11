@@ -1,6 +1,26 @@
 <?php
 require_once 'db.php';
 
+session_start();
+
+
+// Verifica si el usuario está logueado y obtiene su id
+if (!isset($_SESSION['EMAIL'])) {
+    header('Location: login.php');
+    exit;
+} else {
+    $EMAIL = $_SESSION['EMAIL'];
+    $queryUsuario = "SELECT ID FROM USERS WHERE EMAIL = '$EMAIL'";
+    $resultadoUsuario = $conn->query($queryUsuario);
+    if ($resultadoUsuario->num_rows > 0) {
+        $usuario = $resultadoUsuario->fetch_assoc();
+        $id_usuario = $usuario['ID'];
+    } else {
+        $mensaje = "Usuario no encontrado.";
+        exit;
+    }
+}
+
 $errorMsg = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
