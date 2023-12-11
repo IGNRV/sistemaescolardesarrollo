@@ -56,6 +56,20 @@ function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales,
     $fechaCobro = date('Y-m-d');
     $idPago = $pago['idPago'];
 
+    if ($tipoDocumento == 'CHEQUE') {
+        $fechaEmisionCheque = $adicionales['fechaEmisionCheque'];
+
+        // Convertir la fecha de emisión a DateTime
+        $fechaEmisionDateTime = new DateTime($fechaEmisionCheque);
+
+        // Agregar un día a la fecha de emisión
+        $fechaEmisionDateTime->modify('+1 day');
+
+        // Actualizar $fechaEmision y $fechaCobro para reflejar la fecha de emisión del cheque y la fecha de cobro
+        $fechaEmision = $fechaEmisionCheque;
+        $fechaCobro = $fechaEmisionDateTime->format('Y-m-d');
+    }
+
     $stmt->execute();
     $stmt->close();
 }
