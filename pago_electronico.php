@@ -128,8 +128,20 @@ if (isset($_POST['buscarAlumno'])) {
                     <td><?php echo $pago['VALOR_ARANCEL']; ?></td>
                     <td><?php echo $pago['MEDIO_PAGO']; ?></td>
                     <td><?php echo $pago['FECHA_PAGO']; ?></td>
-                    <td><?php echo $pago['ESTADO_PAGO']; ?></td>
-                    <td><input type="checkbox" name="seleccionarPago[]" value="<?php echo $pago['ID_PAGO']; ?>" data-fecha-vencimiento="<?php echo $pago['FECHA_VENCIMIENTO']; ?>"></td>
+                    <td><?php 
+                        if ($pago['ESTADO_PAGO'] == 2) {
+                            echo 'PAGADA';
+                        } elseif ($pago['ESTADO_PAGO'] == 1) {
+                            echo 'VENCIDA';
+                        } elseif ($pago['ESTADO_PAGO'] == 0) {
+                            echo 'VIGENTE';
+                        } else {
+                            echo 'DESCONOCIDO';
+                        }
+                        ?></td>
+                    <td>
+                        <input type="checkbox" name="seleccionarPago[]" value="<?php echo $pago['ID_PAGO']; ?>" <?php echo $pago['ESTADO_PAGO'] == 2 ? 'disabled' : ''; ?>>
+                    </td>
 
                 </tr>
             <?php endforeach; ?>
@@ -159,8 +171,20 @@ if (isset($_POST['buscarAlumno'])) {
                     <td><?php echo $pago['VALOR_ARANCEL']; ?></td>
                     <td><?php echo $pago['MEDIO_PAGO']; ?></td>
                     <td><?php echo $pago['FECHA_PAGO']; ?></td>
-                    <td><?php echo $pago['ESTADO_PAGO']; ?></td>
-                    <td><input type="checkbox" name="seleccionarPago[]" value="<?php echo $pago['ID_PAGO']; ?>" data-fecha-vencimiento="<?php echo $pago['FECHA_VENCIMIENTO']; ?>"></td>
+                    <td><?php 
+                        if ($pago['ESTADO_PAGO'] == 2) {
+                            echo 'PAGADA';
+                        } elseif ($pago['ESTADO_PAGO'] == 1) {
+                            echo 'VENCIDA';
+                        } elseif ($pago['ESTADO_PAGO'] == 0) {
+                            echo 'VIGENTE';
+                        } else {
+                            echo 'DESCONOCIDO';
+                        }
+                        ?></td>
+                    <td>
+                        <input type="checkbox" name="seleccionarPago[]" value="<?php echo $pago['ID_PAGO']; ?>" <?php echo $pago['ESTADO_PAGO'] == 2 ? 'disabled' : ''; ?>>
+                    </td>
 
                 </tr>
             <?php endforeach; ?>
@@ -225,29 +249,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return dateA - dateB;
     });
 
-    checkboxes.forEach(function(checkbox, index) {
-        // Deshabilitar todos los checkboxes excepto el primero
-        if(index > 0) checkbox.disabled = true;
-
-        checkbox.addEventListener('change', function(event) {
-            handleCheckboxChange(event.target, index, checkboxes);
-        });
-    });
-
-    function handleCheckboxChange(changedCheckbox, changedIndex, allCheckboxes) {
-        // Si se desmarca una casilla, también desmarca todas las casillas posteriores
-        if (!changedCheckbox.checked) {
-            for (var i = changedIndex + 1; i < allCheckboxes.length; i++) {
-                allCheckboxes[i].checked = false;
-                allCheckboxes[i].disabled = true;
-            }
-        } else {
-            // Si se marca una casilla, habilita la siguiente casilla
-            if (changedIndex + 1 < allCheckboxes.length) {
-                allCheckboxes[changedIndex + 1].disabled = false;
-            }
-        }
-    }
+  
 
     btnSeleccionarValores.addEventListener('click', function() {
         var totalPagar = 0;
