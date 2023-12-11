@@ -547,25 +547,33 @@ document.addEventListener('DOMContentLoaded', function() {
         var cuota = fila.cells[0].innerText;
         var fechaVencimiento = fila.cells[1].innerText;
         var monto = parseFloat(fila.cells[2].innerText);
+        var fechaPago = fila.cells[4].innerText; // Añadir fecha de pago
+        var estado = fila.cells[5].innerText; // Añadir estado del pago
 
         totalAPagar += monto;
 
-        datosParaPDF.push([cuota, fechaVencimiento, monto.toFixed(0)]);
+        // Agregar datos adicionales al array
+        datosParaPDF.push([cuota, fechaVencimiento, monto.toFixed(0), fechaPago, estado]);
     });
 
     doc.setFontSize(18);
-    doc.text('Reporte de Pagos', 14, 20);
+    doc.text('Recibo de Pagos', 14, 20);
     doc.setFontSize(12);
     doc.text('Total: $' + totalAPagar.toFixed(0), 14, 30);
 
+    // Actualizar las cabeceras de la tabla para incluir los nuevos campos
     doc.autoTable({ 
         startY: 35,
-        head: [['Cuota', 'Fecha Vencimiento', 'Monto']],
+        head: [['Cuota', 'Fecha Vencimiento', 'Monto', 'Fecha de Pago', 'Estado']],
         body: datosParaPDF
     });
 
-    doc.save('reporte_pagos.pdf');
+    doc.save('recibo_pagos.pdf');
+    setTimeout(function() {
+        window.location.reload();
+    }, 1000); // Recarga después de 1 segundo
 }
+
 
 document.getElementById('tipoTarjetaPos').addEventListener('change', function() {
         var tipoTarjetaSeleccionado = this.value;
