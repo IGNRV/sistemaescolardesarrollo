@@ -306,33 +306,37 @@ document.getElementById('btnGenerarReporte').addEventListener('click', function(
     finalY += 10; // Espacio después del título
 
     // Agregar tablas y totales al PDF
-    var mediosPago = ['Efectivo', 'Cheque', 'TarjetaPOS', 'Khipu'];
-    mediosPago.forEach(function(medioPago, index) {
-        // Convertir el id para que coincida con el HTML
+    var mediosPago = ['Efectivo', 'Cheque', 'Debito', 'Credito'];
+
+    mediosPago.forEach(function(medioPago) {
         var seccion = medioPago.charAt(0).toUpperCase() + medioPago.slice(1).toLowerCase();
-        
-        doc.setFontSize(14);
-        finalY += 7; // Espacio antes de cada sección
-        doc.text('Pago con ' + seccion, 14, finalY);
-
-        doc.setFontSize(11);
-        finalY += 3; // Espacio para comenzar la tabla
-        doc.autoTable({ 
-            html: '#tabla' + seccion,
-            startY: finalY,
-            margin: { top: 30 },
-            didDrawPage: function (data) {
-                finalY = data.cursor.y; // Actualizar finalY al final de cada tabla
-            }
-        });
-
-        // Mostrar total recaudado por sección
-        var totalId = 'totalRecaudado' + (medioPago === 'Efectivo' ? '' : seccion);
+        var tabla = document.getElementById('tabla' + seccion);
+        var totalId = 'totalRecaudado' + seccion;
         var totalElement = document.getElementById(totalId);
-        if (totalElement) {
-            finalY += 7; // Espacio antes del total
-            doc.text(totalElement.textContent, 14, finalY);
-            finalY += 5; // Espacio después del total antes de la siguiente sección
+
+        // Verificar si la tabla tiene datos (filas) antes de agregarla al PDF
+        if (tabla && tabla.rows.length > 1) { // Asegurarse de que hay más de una fila (la fila de encabezado)
+            doc.setFontSize(14);
+            finalY += 7; // Espacio antes de cada sección
+            doc.text('Pago con ' + seccion, 14, finalY);
+
+            doc.setFontSize(11);
+            finalY += 3; // Espacio para comenzar la tabla
+            doc.autoTable({
+                html: '#tabla' + seccion,
+                startY: finalY,
+                margin: { top: 30 },
+                didDrawPage: function (data) {
+                    finalY = data.cursor.y; // Actualizar finalY al final de cada tabla
+                }
+            });
+
+            // Mostrar total recaudado por sección
+            if (totalElement) {
+                finalY += 7; // Espacio antes del total
+                doc.text(totalElement.textContent, 14, finalY);
+                finalY += 5; // Espacio después del total antes de la siguiente sección
+            }
         }
     });
 
@@ -346,7 +350,6 @@ document.getElementById('btnGenerarReporte').addEventListener('click', function(
     // Guardar el PDF
     doc.save('reporte_cuadratura.pdf');
 });
-
 
 </script>
 
