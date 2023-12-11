@@ -577,13 +577,17 @@ document.addEventListener('DOMContentLoaded', function() {
     var pagosSeleccionados = document.querySelectorAll('.seleccionarPago:checked');
     var pagos = [];
 
-    pagosSeleccionados.forEach(function(checkbox, index) {
+    pagosSeleccionados.forEach(function(checkbox) {
         var idPago = checkbox.getAttribute('data-id-pago');
-        var banco = document.getElementsByName('bancoCheque[]')[index].value;
-        var nDocumento = document.getElementsByName('nDocumentoCheque[]')[index].value;
-        var monto = document.getElementsByName('montoCheque[]')[index].value;
-        var fechaEmision = document.getElementsByName('fechaEmisionCheque[]')[index].value;
-        var fechaDeposito = document.getElementsByName('fechaDepositoCheque[]')[index].value;
+        var fila = checkbox.closest('tr'); // Encuentra la fila del checkbox
+
+        var banco = fila.querySelector('[name="bancoCheque[]"]').value;
+        var nDocumento = fila.querySelector('[name="nDocumentoCheque[]"]').value;
+        var monto = fila.querySelector('[name="montoCheque[]"]').value;
+        var fechaEmision = fila.querySelector('[name="fechaEmisionCheque[]"]').value;
+        console.log("fechaEmision:", fechaEmision);
+        var fechaDeposito = fila.querySelector('[name="fechaDepositoCheque[]"]').value;
+
         var fechaCobro = new Date(fechaEmision);
         fechaCobro.setDate(fechaCobro.getDate() + 1);
 
