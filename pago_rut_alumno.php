@@ -21,37 +21,38 @@ if (isset($_POST['btnBuscarAlumno'])) {
 
     // Consulta a la base de datos
     $stmt = $conn->prepare("SELECT 
-    hp.ID_PAGO,
-    hp.ID_ALUMNO,
-    a.RUT_ALUMNO,
-    hp.CODIGO_PRODUCTO,
-    hp.FOLIO_PAGO,
-    hp.VALOR_ARANCEL,
-    hp.DESCUENTO_BECA,
-    hp.OTROS_DESCUENTOS,
-    hp.VALOR_A_PAGAR,
-    hp.FECHA_PAGO,
-    hp.MEDIO_PAGO,
-    hp.NRO_MEDIOPAGO,
-    hp.FECHA_SUSCRIPCION,
-    hp.BANCO_EMISOR,
-    hp.TIPO_MEDIOPAGO,
-    hp.ESTADO_PAGO,
-    hp.TIPO_DOCUMENTO,
-    hp.NUMERO_DOCUMENTO,
-    hp.FECHA_VENCIMIENTO,
-    hp.FECHA_INGRESO,
-    hp.FECHA_EMISION,
-    hp.FECHA_COBRO,
-    hp.ID_PERIODO_ESCOLAR
-FROM
-    c1occsyspay.HISTORIAL_PAGOS AS hp
+        hp.ID_PAGO,
+        hp.ID_ALUMNO,
+        a.RUT_ALUMNO,
+        hp.CODIGO_PRODUCTO,
+        hp.FOLIO_PAGO,
+        hp.VALOR_ARANCEL,
+        hp.DESCUENTO_BECA,
+        hp.OTROS_DESCUENTOS,
+        hp.VALOR_A_PAGAR,
+        hp.FECHA_PAGO,
+        hp.MEDIO_PAGO,
+        hp.NRO_MEDIOPAGO,
+        hp.FECHA_SUSCRIPCION,
+        hp.BANCO_EMISOR,
+        hp.TIPO_MEDIOPAGO,
+        hp.ESTADO_PAGO,
+        hp.TIPO_DOCUMENTO,
+        hp.NUMERO_DOCUMENTO,
+        hp.FECHA_VENCIMIENTO,
+        hp.FECHA_INGRESO,
+        hp.FECHA_EMISION,
+        hp.FECHA_COBRO,
+        hp.ID_PERIODO_ESCOLAR,
+        hp.CODIGO_PRODUCTO
+    FROM
+        c1occsyspay.HISTORIAL_PAGOS AS hp
         LEFT JOIN
-    ALUMNO AS a ON a.ID_ALUMNO = hp.ID_ALUMNO
-WHERE
-    a.RUT_ALUMNO = ?
-ORDER BY
-    hp.FECHA_VENCIMIENTO ASC"); // Ordenar por FECHA_VENCIMIENTO ascendente
+        ALUMNO AS a ON a.ID_ALUMNO = hp.ID_ALUMNO
+    WHERE
+        a.RUT_ALUMNO = ?
+    ORDER BY
+        hp.FECHA_VENCIMIENTO ASC");
     $stmt->bind_param("s", $rutAlumno);
     $stmt->execute();
     $resultado = $stmt->get_result();
@@ -60,19 +61,16 @@ ORDER BY
         while ($fila = $resultado->fetch_assoc()) {
             $fechaVencimiento = new DateTime($fila['FECHA_VENCIMIENTO']);
             if ($fechaVencimiento < new DateTime($fechaActual) && $fila['ESTADO_PAGO'] == 0) {
-                // Actualizar el estado a vencido (1) si la fecha de vencimiento es anterior a la fecha actual
                 $updateStmt = $conn->prepare("UPDATE HISTORIAL_PAGOS SET ESTADO_PAGO = 1 WHERE ID_PAGO = ?");
                 $updateStmt->bind_param("i", $fila['ID_PAGO']);
                 $updateStmt->execute();
                 $updateStmt->close();
                 $fila['ESTADO_PAGO'] = 1;
             }
-            
-            if ($fechaVencimiento->format('Y') < date('Y')) {
-                // Agregar a saldo del período anterior
+
+            if ($fila['CODIGO_PRODUCTO'] == 2) {
                 $saldoPeriodoAnterior[] = $fila;
-            } else {
-                // Agregar a cuotas del período actual
+            } elseif ($fila['CODIGO_PRODUCTO'] == 1) {
                 $cuotasPeriodoActual[] = $fila;
             }
         }
