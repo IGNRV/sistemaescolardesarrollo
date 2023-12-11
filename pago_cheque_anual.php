@@ -45,7 +45,8 @@ if (isset($_POST['btnBuscarAlumno'])) {
     hp.FECHA_INGRESO,
     hp.FECHA_EMISION,
     hp.FECHA_COBRO,
-    hp.ID_PERIODO_ESCOLAR
+    hp.ID_PERIODO_ESCOLAR,
+    hp.CODIGO_PRODUCTO
 FROM
     c1occsyspay.HISTORIAL_PAGOS AS hp
         LEFT JOIN
@@ -70,11 +71,9 @@ ORDER BY
                 $fila['ESTADO_PAGO'] = 1;
             }
             
-            if ($fechaVencimiento->format('Y') < date('Y')) {
-                // Agregar a saldo del período anterior
+            if ($fila['CODIGO_PRODUCTO'] == 2) {
                 $saldoPeriodoAnterior[] = $fila;
-            } else {
-                // Agregar a cuotas del período actual
+            } elseif ($fila['CODIGO_PRODUCTO'] == 1) {
                 $cuotasPeriodoActual[] = $fila;
             }
         }
