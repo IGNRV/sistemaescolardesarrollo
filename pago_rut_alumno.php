@@ -550,13 +550,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         totalAPagar += monto;
 
-        datosParaPDF.push([cuota, fechaVencimiento, monto.toFixed(2)]);
+        datosParaPDF.push([cuota, fechaVencimiento, monto.toFixed(0)]);
     });
 
     doc.setFontSize(18);
     doc.text('Reporte de Pagos', 14, 20);
     doc.setFontSize(12);
-    doc.text('Total: $' + totalAPagar.toFixed(2), 14, 30);
+    doc.text('Total: $' + totalAPagar.toFixed(0), 14, 30);
 
     doc.autoTable({ 
         startY: 35,
@@ -566,6 +566,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     doc.save('reporte_pagos.pdf');
 }
+
+document.getElementById('tipoTarjetaPos').addEventListener('change', function() {
+        var tipoTarjetaSeleccionado = this.value;
+        var campoCuotas = document.getElementById('cuotasPos');
+
+        if (tipoTarjetaSeleccionado === 'debito') {
+            // Si se selecciona tarjeta débito, establecer cuotas a 1 y bloquear el campo
+            campoCuotas.value = '1';
+            campoCuotas.disabled = true;
+        } else {
+            // Si se selecciona otra opción, desbloquear el campo y limpiarlo
+            campoCuotas.disabled = false;
+            campoCuotas.value = '';
+        }
+    });
 
 
 </script>
