@@ -81,7 +81,8 @@ ORDER BY
     <title>Portal de Pago</title>
     <!-- Agrega los enlaces a los estilos de Bootstrap -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>    
 </head>
 <body>
 <?php if (!empty($mensaje)): ?>
@@ -105,11 +106,11 @@ ORDER BY
                         </div>
                         
                         <!-- Campo RUT del padre/poderado -->
-                        <div class="form-group">
+                        <!-- <div class="form-group">
                             <label for="rutPadre">RUT del Padre/Apoderado</label>
                             <input type="text" class="form-control" id="rutPadre" placeholder="Ingrese el RUT del Padre/Apoderado">
                             <button type="button" class="btn btn-primary custom-button mt-3" id="btnBuscarApoderado">Buscar</button>
-                        </div>
+                        </div> -->
 
 
 <!-- Tabla de pagos -->
@@ -472,6 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
         xhr.onload = function() {
             if (xhr.status === 200) {
                 alert('Pago registrado con éxito.');
+                generarPDF(); // Llamar a la función para generar el PDF
             } else {
                 alert('Error al registrar el pago.');
             }
@@ -514,6 +516,38 @@ document.addEventListener('DOMContentLoaded', function() {
             checkbox.addEventListener('change', calcularTotalAPagar);
         });
     });
+
+    function generarPDF() {
+    var doc = new jspdf.jsPDF();
+    var pagosSeleccionados = document.querySelectorAll('.seleccionarPago:checked');
+    var datosParaPDF = [];
+    var totalAPagar = 0;
+
+    pagosSeleccionados.forEach(function(checkbox, index) {
+        var fila = checkbox.closest('tr');
+        var cuota = fila.cells[0].innerText;
+        var fechaVencimiento = fila.cells[1].innerText;
+        var monto = parseFloat(fila.cells[2].innerText);
+
+        totalAPagar += monto;
+
+        datosParaPDF.push([cuota, fechaVencimiento, monto.toFixed(2)]);
+    });
+
+    doc.setFontSize(18);
+    doc.text('Reporte de Pagos', 14, 20);
+    doc.setFontSize(12);
+    doc.text('Total: $' + totalAPagar.toFixed(2), 14, 30);
+
+    doc.autoTable({ 
+        startY: 35,
+        head: [['Cuota', 'Fecha Vencimiento', 'Monto']],
+        body: datosParaPDF
+    });
+
+    doc.save('reporte_pagos.pdf');
+}
+
 
 </script>
 
