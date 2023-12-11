@@ -84,6 +84,11 @@ ORDER BY
     }
     $stmt->close();
 }
+
+if (isset($_SESSION['pagoRegistrado'])) {
+    $mensaje = "Pago registrado con éxito.";
+    unset($_SESSION['pagoRegistrado']); // Borrar el indicador de sesión
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -119,11 +124,11 @@ ORDER BY
                         </div>
                         
                         <!-- Campo RUT del padre/poderado -->
-                        <div class="form-group">
+                        <!-- <div class="form-group">
                             <label for="rutPadre">RUT del Padre/Apoderado</label>
                             <input type="text" class="form-control" id="rutPadre" placeholder="Ingrese el RUT del Padre/Apoderado">
                             <button type="button" class="btn btn-primary custom-button mt-3" id="btnBuscarApoderado">Buscar</button>
-                        </div>
+                        </div> -->
 
 
 <!-- Tabla de pagos -->
@@ -652,8 +657,20 @@ function generarPDF(datos) {
         body: datos.map(pago => [pago['Cuota'], pago['Fecha Vencimiento'], pago['Monto Cuota'], pago['Banco Cheque'], pago['Número Documento'], pago['Monto Cheque'], pago['Fecha Emisión'], pago['Fecha Depósito']])
     });
 
+    // Guardar el PDF
     doc.save('recibo_pagos_cuotas.pdf');
+
+    // Establecer un indicador de éxito en sessionStorage y recargar la página
+    sessionStorage.setItem('pagoRegistrado', 'true');
+    setTimeout(function() {
+        window.location.reload();
+    }, 1000); // Recarga la página después de 1 segundo
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Borrar el indicador de éxito de sessionStorage
+    sessionStorage.removeItem('pagoRegistrado');
+});
 </script>
 
 </body>
