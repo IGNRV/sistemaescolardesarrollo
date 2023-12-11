@@ -156,6 +156,9 @@ include 'nav.php';
                 case 'editar_apoderado':
                     include 'editar_apoderado.php';
                     break;
+                case 'pago_cheque_anual':
+                    include 'pago_cheque_anual.php';
+                    break;
                 case 'inicio':
                 default:
                     include 'inicio.php';
