@@ -76,7 +76,9 @@ if (isset($_POST['buscarAlumno'])) {
                                 ap.PERIODO_ESCOLAR,
                                 ap.FONO_LAB,
                                 ap.TUTOR_ACADEMICO,
-                                a.PERIODO_ESCOLAR
+                                ap.TUTOR_ECONOMICO,
+                                a.PERIODO_ESCOLAR,
+                                ap.DELETE_FLAG
                             FROM
                                 ALUMNO AS a
                                     LEFT JOIN
@@ -84,7 +86,7 @@ if (isset($_POST['buscarAlumno'])) {
                                     LEFT JOIN
                                 APODERADO AS ap ON ap.ID_APODERADO = raa.ID_APODERADO
                             WHERE
-                                a.RUT_ALUMNO = ? AND ap.TUTOR_ACADEMICO = 1");
+                                a.RUT_ALUMNO = ? AND ap.TUTOR_ECONOMICO = 1 AND ap.DELETE_FLAG = 0");
     $stmt->bind_param("s", $rutAlumno);
     $stmt->execute();
     $resultado = $stmt->get_result();
@@ -169,6 +171,70 @@ if (!empty($mensaje)) {
     echo '<div class="alert alert-success">' . htmlspecialchars($mensaje) . '</div>';
 }
 
+if (isset($_POST['ACTUALIZAR_DATOS'])) { // Asegúrate de que este nombre de input coincide con el atributo "name" del botón de actualización
+    $rutTutor = $_POST['rut']; // Asume que 'rut' es el nombre del campo en tu formulario
+    $nombreTutor = $_POST['nombre'];
+    $apPaternoTutor = $_POST['apellido_paterno'];
+    $apMaternoTutor = $_POST['apellido_materno'];
+    $telefonoParticular = $_POST['telefono_particular'];
+    $telefonoTrabajo = $_POST['telefono_trabajo'];
+    $calle = $_POST['calle'];
+    $nCalle = $_POST['n_calle'];
+    $restoDireccion = $_POST['resto_direccion'];
+    $villaPoblacion = $_POST['villa_poblacion'];
+    $idComuna = $_POST['comuna']; // Asume que 'comuna' es el nombre del campo en tu formulario y que es un ID válido
+    $correoPersonal = $_POST['correo_electronico_particular'];
+    $correoTrabajo = $_POST['correo_electronico_trabajo'];
+    $tutorEconomico = isset($_POST['tutorEconomico']) ? 1 : 0;
+
+    // Prepara la consulta SQL para actualizar los datos del apoderado
+    $stmtActualizar = $conn->prepare("UPDATE APODERADO SET 
+        NOMBRE = ?, 
+        AP_PATERNO = ?, 
+        AP_MATERNO = ?, 
+        FONO_PART = ?, 
+        FONO_LAB = ?, 
+        CALLE = ?, 
+        NRO_CALLE = ?, 
+        OBS_DIRECCION = ?, 
+        VILLA = ?, 
+        ID_COMUNA = ?, 
+        MAIL_PART = ?, 
+        MAIL_LAB = ?, 
+        TUTOR_ECONOMICO = ?
+        WHERE RUT_APODERADO = ?");
+    $stmtActualizar->bind_param("ssssssssssssis", 
+        $nombreTutor, 
+        $apPaternoTutor, 
+        $apMaternoTutor, 
+        $telefonoParticular, 
+        $telefonoTrabajo, 
+        $calle, 
+        $nCalle, 
+        $restoDireccion, 
+        $villaPoblacion, 
+        $idComuna, 
+        $correoPersonal, 
+        $correoTrabajo, 
+        $tutorEconomico,
+        $rutTutor);
+    $stmtActualizar->execute();
+
+    // Verifica si la actualización fue exitosa
+    if ($stmtActualizar->affected_rows > 0) {
+        $mensaje = "Datos del tutor económico actualizados correctamente.";
+    } else {
+        $mensaje = "Error al actualizar los datos del tutor económico.";
+    }
+    $stmtActualizar->close();
+
+    // Muestra el mensaje resultante
+    if (!empty($mensaje)) {
+        echo '<div class="alert alert-success">' . htmlspecialchars($mensaje) . '</div>';
+    }
+}
+
+
 
 
 
@@ -186,47 +252,47 @@ if (!empty($mensaje)) {
     <form method="post">
         <div class="form-group">
             <label for="rutTutor">RUT</label>
-            <input type="text" class="form-control" name="rut" id="rutTutor" value="<?php echo htmlspecialchars($rutTutor); ?>" maxlength="9" disabled>
+            <input type="text" class="form-control" name="rut" id="rutTutor" value="<?php echo htmlspecialchars($rutTutor); ?>" maxlength="10">
         </div>
         <div class="form-group">
             <label for="nombresTutor">Nombre</label>
-            <input type="text" class="form-control" name="nombre" id="nombresTutor" value="<?php echo htmlspecialchars($nombreTutor); ?>" disabled>
+            <input type="text" class="form-control" name="nombre" id="nombresTutor" value="<?php echo htmlspecialchars($nombreTutor); ?>">
         </div>
         <div class="form-group">
             <label for="apPaternoTutor">Apellido Paterno</label>
-            <input type="text" class="form-control" name="apellido_paterno" id="apPaternoTutor" value="<?php echo htmlspecialchars($apPaternoTutor); ?>" disabled>
+            <input type="text" class="form-control" name="apellido_paterno" id="apPaternoTutor" value="<?php echo htmlspecialchars($apPaternoTutor); ?>">
         </div>
         <div class="form-group">
             <label for="apMaternoTutor">Apellido Materno</label>
-            <input type="text" class="form-control" name="apellido_materno" id="apMaternoTutor" value="<?php echo htmlspecialchars($apMaternoTutor); ?>" disabled>
+            <input type="text" class="form-control" name="apellido_materno" id="apMaternoTutor" value="<?php echo htmlspecialchars($apMaternoTutor); ?>">
         </div>
         <div class="form-group">
             <label for="telefono_particular">Teléfono particular</label>
-            <input type="text" class="form-control" name="telefono_particular" id="telefono_particular" value="<?php echo htmlspecialchars($telefonoParticular); ?>" disabled>
+            <input type="text" class="form-control" name="telefono_particular" id="telefono_particular" value="<?php echo htmlspecialchars($telefonoParticular); ?>">
         </div>
         <div class="form-group">
             <label for="telefono_trabajo">Teléfono trabajo</label>
-            <input type="text" class="form-control" name="telefono_trabajo" id="telefono_trabajo" value="<?php echo htmlspecialchars($telefonoTrabajo); ?>" disabled>
+            <input type="text" class="form-control" name="telefono_trabajo" id="telefono_trabajo" value="<?php echo htmlspecialchars($telefonoTrabajo); ?>">
         </div>
         <div class="form-group">
             <label for="calleTutor">Calle</label>
-            <input type="text" class="form-control" name="calle" id="calleTutor" value="<?php echo htmlspecialchars($calle); ?>" disabled>
+            <input type="text" class="form-control" name="calle" id="calleTutor" value="<?php echo htmlspecialchars($calle); ?>">
         </div>
         <div class="form-group">
             <label for="nCalleTutor">N° Calle</label>
-            <input type="text" class="form-control" name="n_calle" id="nCalleTutor" value="<?php echo htmlspecialchars($nCalle); ?>" disabled>
+            <input type="text" class="form-control" name="n_calle" id="nCalleTutor" value="<?php echo htmlspecialchars($nCalle); ?>">
         </div>
         <div class="form-group">
             <label for="restoDireccionTutor">Resto Dirección</label>
-            <input type="text" class="form-control" name="resto_direccion" id="restoDireccionTutor" value="<?php echo htmlspecialchars($restoDireccion); ?>" disabled>
+            <input type="text" class="form-control" name="resto_direccion" id="restoDireccionTutor" value="<?php echo htmlspecialchars($restoDireccion); ?>">
         </div>
         <div class="form-group">
             <label for="villaPoblacionTutor">Villa/Población</label>
-            <input type="text" class="form-control" name="villa_poblacion" id="villaPoblacionTutor" value="<?php echo htmlspecialchars($villaPoblacion); ?>" disabled>
+            <input type="text" class="form-control" name="villa_poblacion" id="villaPoblacionTutor" value="<?php echo htmlspecialchars($villaPoblacion); ?>">
         </div>
         <div class="form-group">
             <label for="comunaTutor">Comuna</label>
-            <select class="form-control" name="comuna" id="comunaTutor" disabled>
+            <select class="form-control" name="comuna" id="comunaTutor">
                 <?php foreach ($comunas as $comuna): ?>
                     <option value="<?php echo htmlspecialchars($comuna['ID_COMUNA']); ?>" <?php if ($comuna['ID_COMUNA'] == $idComunaApoderado) echo 'selected'; ?>>
                         <?php echo htmlspecialchars($comuna['NOM_COMUNA']); ?>
@@ -236,14 +302,20 @@ if (!empty($mensaje)) {
         </div>
         <div class="form-group">
             <label for="correoPersonalTutor">Correo Electrónico Personal</label>
-            <input type="email" class="form-control" name="correo_electronico_particular" id="correoPersonalTutor" value="<?php echo htmlspecialchars($correoPersonal); ?>" disabled>
+            <input type="email" class="form-control" name="correo_electronico_particular" id="correoPersonalTutor" value="<?php echo htmlspecialchars($correoPersonal); ?>">
         </div>
         <div class="form-group">
             <label for="correoTrabajoTutor">Correo Electrónico Trabajo</label>
-            <input type="email" class="form-control" name="correo_electronico_trabajo" id="correoTrabajoTutor" value="<?php echo htmlspecialchars($correoTrabajo); ?>" disabled>
+            <input type="email" class="form-control" name="correo_electronico_trabajo" id="correoTrabajoTutor" value="<?php echo htmlspecialchars($correoTrabajo); ?>">
         </div>
+
+        <div class="form-group">
+            <label for="tutorEconomico">Tutor Económico</label>
+            <input type="checkbox" id="tutorEconomico" name="tutorEconomico" value="1" <?php echo (isset($apoderados[0]['TUTOR_ECONOMICO']) && $apoderados[0]['TUTOR_ECONOMICO'] == 1) ? 'checked' : ''; ?>>
+        </div>
+
         
-        <!-- <button type="submit" class="btn btn-primary btn-block custom-button">ACTUALIZAR</button> -->
+       <button type="submit" class="btn btn-primary btn-block custom-button" name="ACTUALIZAR_DATOS">ACTUALIZAR</button>
     </form>
 
     <h3>Medios de pago suscritos</h3>

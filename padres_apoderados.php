@@ -92,6 +92,7 @@ if (isset($_POST['actualizar_datos'])) {
     $correoElectronicoPersonal = $_POST['correoElectronicoPersonal'];
     $correoElectronicoTrabajo = $_POST['correoElectronicoTrabajo'];
     $tutorAcademico = isset($_POST['tutorAcademico']) ? 1 : 0;
+    $tutorEconomico = isset($_POST['tutorEconomico']) ? 1 : 0;
 
     // Buscar ID_REGION correspondiente a ID_COMUNA seleccionada
     $consultaRegion = $conn->prepare("SELECT ID_REGION FROM COMUNA WHERE ID_COMUNA = ?");
@@ -116,8 +117,8 @@ if (isset($_POST['actualizar_datos'])) {
 
 
             // Inserta o actualiza en la tabla APODERADO
-            $stmt = $conn->prepare("INSERT INTO APODERADO (RUT_APODERADO, PARENTESCO, NOMBRE, AP_PATERNO, AP_MATERNO, FECHA_NAC, CALLE, NRO_CALLE, OBS_DIRECCION, VILLA, ID_COMUNA, ID_REGION, FONO_PART, MAIL_PART, MAIL_LAB, TUTOR_ACADEMICO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-            $stmt->bind_param("ssssssssssiiissi", $rut, $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $idComunaSeleccionada, $idRegionCorrespondiente, $telefonoParticular, $correoElectronicoPersonal, $correoElectronicoTrabajo, $tutorAcademico);
+            $stmt = $conn->prepare("INSERT INTO APODERADO (RUT_APODERADO, PARENTESCO, NOMBRE, AP_PATERNO, AP_MATERNO, FECHA_NAC, CALLE, NRO_CALLE, OBS_DIRECCION, VILLA, ID_COMUNA, ID_REGION, FONO_PART, MAIL_PART, MAIL_LAB, TUTOR_ACADEMICO, TUTOR_ECONOMICO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("ssssssssssiiissii", $rut, $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $idComunaSeleccionada, $idRegionCorrespondiente, $telefonoParticular, $correoElectronicoPersonal, $correoElectronicoTrabajo, $tutorAcademico, $tutorEconomico);
             $stmt->execute();
             $idApoderado = $conn->insert_id;
 
@@ -274,8 +275,12 @@ if (isset($_SESSION['mensaje_exito'])) {
             <input type="email" class="form-control" name="correoElectronicoTrabajo">
         </div>
         <div class="form-group">
-            <label for="tutorAcademico">Tutor economico</label>
+            <label for="tutorAcademico">Tutor Academico</label>
             <input type="checkbox" id="tutorAcademico" name="tutorAcademico" value="1">
+        </div>
+        <div class="form-group">
+            <label for="tutorEconomico">Tutor Economico</label>
+            <input type="checkbox" id="tutorEconomico" name="tutorEconomico" value="1">
         </div>
         <button type="submit" class="btn btn-primary btn-block custom-button" name="actualizar_datos">AGREGAR APODERADO</button>
 </form>

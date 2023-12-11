@@ -50,6 +50,8 @@ if (isset($_POST['actualizar_apoderado'])) {
     $mailLab = $_POST['correoElectronicoTrabajo'];
     $rut = $_POST['rut'];
     $tutorAcademico = isset($_POST['tutorAcademico']) ? 1 : 0;
+    $tutorEconomico = isset($_POST['tutorEconomico']) ? 1 : 0;
+    
 
     // Necesitas encontrar el ID_REGION correspondiente a esta comuna
     $consultaRegion = $conn->prepare("SELECT ID_REGION FROM COMUNA WHERE ID_COMUNA = ?");
@@ -62,8 +64,8 @@ if (isset($_POST['actualizar_apoderado'])) {
         $idRegion = $filaRegion['ID_REGION'];
 
         // Actualiza los datos en la base de datos con el ID_COMUNA e ID_REGION
-        $stmtActualizar = $conn->prepare("UPDATE APODERADO SET PARENTESCO = ?, NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, FECHA_NAC = ?, CALLE = ?, NRO_CALLE = ?, OBS_DIRECCION = ?, VILLA = ?, ID_COMUNA = ?, ID_REGION = ?, FONO_PART = ?, MAIL_PART = ?, MAIL_LAB = ?, TUTOR_ACADEMICO = ?, RUT_APODERADO = ? WHERE RUT_APODERADO = ?");
-        $stmtActualizar->bind_param("sssssssssssssssss", $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $comuna, $idRegion, $fonoPart, $mailPart, $mailLab, $tutorAcademico, $rut,  $rutOriginal);
+        $stmtActualizar = $conn->prepare("UPDATE APODERADO SET PARENTESCO = ?, NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, FECHA_NAC = ?, CALLE = ?, NRO_CALLE = ?, OBS_DIRECCION = ?, VILLA = ?, ID_COMUNA = ?, ID_REGION = ?, FONO_PART = ?, MAIL_PART = ?, MAIL_LAB = ?, TUTOR_ACADEMICO = ?, RUT_APODERADO = ?, TUTOR_ECONOMICO = ? WHERE RUT_APODERADO = ?");
+        $stmtActualizar->bind_param("ssssssssssssssssis", $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $comuna, $idRegion, $fonoPart, $mailPart, $mailLab, $tutorAcademico, $rut, $tutorEconomico,  $rutOriginal);
         $stmtActualizar->execute();
 
         if ($stmtActualizar->affected_rows > 0) {
@@ -190,8 +192,12 @@ if ($apoderado != null) {
                             </div>
 
                             <div class="form-group">
-                                <label for="tutorAcademico">Tutor Economico</label>
+                                <label for="tutorAcademico">Tutor Academico</label>
                                 <input type="checkbox" id="tutorAcademico" name="tutorAcademico" value="1" <?php echo $apoderado['TUTOR_ACADEMICO'] ? 'checked' : ''; ?>>
+                            </div>
+                            <div class="form-group">
+                                <label for="tutorEconomico">Tutor Economico</label>
+                                <input type="checkbox" id="tutorEconomico" name="tutorEconomico" value="1" <?php echo $apoderado['TUTOR_ECONOMICO'] ? 'checked' : ''; ?>>
                             </div>
 
                             <button type="submit" name="actualizar_apoderado" class="btn btn-primary">Actualizar</button>
