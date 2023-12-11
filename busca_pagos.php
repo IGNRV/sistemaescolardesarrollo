@@ -4,7 +4,7 @@ require_once 'db.php';
 $fecha = $_GET['fecha'] ?? '';
 $medioPago = $_GET['medioPago'] ?? '';
 
-$query = "SELECT * FROM historial_de_pagos WHERE fecha_pago = '$fecha' AND medio_de_pago = '$medioPago' AND estado = 1";
+$query = "SELECT * FROM DETALLES_TRANSACCION WHERE FECHA_PAGO = '$fecha' AND MEDIO_DE_PAGO = '$medioPago' AND ESTADO = 1";
 $resultado = $conn->query($query);
 
 $datos = [];

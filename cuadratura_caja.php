@@ -55,10 +55,10 @@ ini_set('display_errors', 1);
                         <div class="form-group">
                             <label for="medioPago">Medio de Pago</label>
                             <select class="form-control" id="medioPago">
-                                <option value="1">Efectivo</option>
-                                <option value="3">Cheque</option>
-                                <option value="2">Tarjeta POS</option>
-                                <option value="4">Khipu</option>
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="Debito">Debito</option>
+                                <option value="Credito">Credito</option>
                                 <!-- Agrega más opciones según sea necesario -->
                             </select>
                         </div>
@@ -151,16 +151,14 @@ ini_set('display_errors', 1);
             </div>
         </div>
     </div>
-    <!-- Nuevo contenedor para PAGO CON CHEQUE -->
     <div class="col-md-12 mt-4">
         <div class="card">
             <div class="card-header">
                 <!-- Título y subtítulo personalizados -->
-                <h3 class="text-center custom-title" id="totalRecaudadoTarjetaPOS">TOTAL RECAUDADO $</h3>
-                <h5 class="text-center">PAGO CON TARJETA POS</h5>
+                <h3 class="text-center custom-title" id="totalRecaudadoDebito">TOTAL RECAUDADO $</h3>
+                <h5 class="text-center">PAGO CON DEBITO</h5>
             </div>
             <div class="card-body">
-                <!-- Tabla de Pago con Cheque -->
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead>
@@ -173,7 +171,7 @@ ini_set('display_errors', 1);
                                 <th>RUT Alumno</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaTarjetaPOS">
+                        <tbody id="tablaDebito">
                             <!-- Agrega filas de datos según tus necesidades -->
                             <tr>
                                 <td>Fecha de Pago</td>
@@ -194,11 +192,10 @@ ini_set('display_errors', 1);
         <div class="card">
             <div class="card-header">
                 <!-- Título y subtítulo personalizados -->
-                <h3 class="text-center custom-title" id="totalRecaudadoKhipu">TOTAL RECAUDADO $</h3>
-                <h5 class="text-center">PAGO CON KHIPU</h5>
+                <h3 class="text-center custom-title" id="totalRecaudadoCredito">TOTAL RECAUDADO $</h3>
+                <h5 class="text-center">PAGO CON Credito</h5>
             </div>
             <div class="card-body">
-                <!-- Tabla de Pago con Cheque -->
                 <div class="table-responsive">
                     <table class="table table-bordered">
                         <thead>
@@ -211,7 +208,7 @@ ini_set('display_errors', 1);
                                 <th>RUT Alumno</th>
                             </tr>
                         </thead>
-                        <tbody id="tablaKhipu">
+                        <tbody id="tablaCredito">
                             <!-- Agrega filas de datos según tus necesidades -->
                             <tr>
                                 <td>Fecha de Pago</td>
@@ -238,95 +235,65 @@ ini_set('display_errors', 1);
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 <script>
-var datosEfectivo = [];
-var totalEfectivoGlobal = 0;
-var datosCheque = [];
-var totalChequeGlobal = 0;
-var datosTarjetaPOS = [];
-var totalTarjetaPOSGlobal = 0;
-var datosKhipu = [];
-var totalKhipuGlobal = 0;
 
 document.getElementById('btnBuscar').addEventListener('click', function() {
     var fecha = document.getElementById('fecha').value;
-    var medioPagoSeleccionado = document.getElementById('medioPago').value;
+    var medioPago = document.getElementById('medioPago').value;
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'busca_pagos.php?fecha=' + fecha + '&medioPago=' + medioPagoSeleccionado, true);
-    xhr.onload = function() {
-        if (this.status == 200) {
-            var respuesta = JSON.parse(this.responseText);
-            switch (medioPagoSeleccionado) {
-                case "1": // Efectivo
-                    datosEfectivo = respuesta;
-                    totalEfectivoGlobal = actualizarTabla(datosEfectivo, 'tablaEfectivo', 1);
-                    document.getElementById('totalRecaudado').textContent = 'TOTAL RECAUDADO $' + totalEfectivoGlobal.toFixed(0);
-                    break;
-                case "3": // Cheque
-                    datosCheque = respuesta;
-                    totalChequeGlobal = actualizarTabla(datosCheque, 'tablaCheque', 3);
-                    document.getElementById('totalRecaudadoCheque').textContent = 'TOTAL RECAUDADO $' + totalChequeGlobal.toFixed(0);
-                    break;
-                case "2": // Tarjeta POS
-                    datosTarjetaPOS = respuesta;
-                    totalTarjetaPOSGlobal = actualizarTabla(datosTarjetaPOS, 'tablaTarjetaPOS', 2);
-                    document.getElementById('totalRecaudadoTarjetaPOS').textContent = 'TOTAL RECAUDADO $' + totalTarjetaPOSGlobal.toFixed(0);
-                    break;
-                case "4": // Khipu
-                    datosKhipu = respuesta;
-                    totalKhipuGlobal = actualizarTabla(datosKhipu, 'tablaKhipu', 4);
-                    document.getElementById('totalRecaudadoKhipu').textContent = 'TOTAL RECAUDADO $' + totalKhipuGlobal.toFixed(0);
-                    break;
-            }
-             // Actualizar el total general
-             var totalRecaudadoGeneral = totalEfectivoGlobal + totalChequeGlobal + totalTarjetaPOSGlobal + totalKhipuGlobal;
-                document.getElementById('totalRecaudadoGeneral').textContent = 'TOTAL RECAUDADO $' + totalRecaudadoGeneral.toFixed(0);
-        } else {
-            document.getElementById('tablaEfectivo').innerHTML = '<tr><td colspan="6">No se han encontrado datos</td></tr>';
-            document.getElementById('tablaCheque').innerHTML = '<tr><td colspan="6">No se han encontrado datos</td></tr>';
-            document.getElementById('tablaTarjetaPOS').innerHTML = '<tr><td colspan="6">No se han encontrado datos</td></tr>';
-            document.getElementById('tablaKhipu').innerHTML = '<tr><td colspan="6">No se han encontrado datos</td></tr>';
-        }
-    };
-    xhr.send();
+    // Verificar si el medio de pago es 'Efectivo', 'Cheque' o 'Debito'
+    if ((medioPago === 'Efectivo' || medioPago === 'Cheque' || medioPago === 'Debito' || medioPago === 'Credito') && fecha) {
+        fetch('busca_pagos.php?fecha=' + fecha + '&medioPago=' + medioPago)
+            .then(response => response.json())
+            .then(datos => {
+                let totalRecaudado = 0;
+                let tabla;
+
+                // Determinar qué tabla actualizar en función del medio de pago seleccionado
+                if (medioPago === 'Efectivo') {
+                    tabla = document.getElementById('tablaEfectivo');
+                } else if (medioPago === 'Cheque') {
+                    tabla = document.getElementById('tablaCheque');
+                } else if (medioPago === 'Debito') {
+                    tabla = document.getElementById('tablaDebito');
+                } else if (medioPago === 'Credito') {
+                    tabla = document.getElementById('tablaCredito');
+                }
+
+                tabla.innerHTML = ''; // Limpiar la tabla antes de agregar nuevos datos
+
+                // Iterar a través de los datos y actualizar la tabla correspondiente
+                datos.forEach(function(pago) {
+                    var fila = `<tr>
+                        <td>${pago.FECHA_PAGO}</td>
+                        <td>${pago.VALOR}</td>
+                        <td>${pago.MEDIO_DE_PAGO}</td>
+                        <td>${pago.TIPO_DOCUMENTO}</td>
+                        <td>${pago.ESTADO}</td>
+                        <td>${pago.RUT_ALUMNO}</td>
+                    </tr>`;
+                    tabla.innerHTML += fila;
+
+                    totalRecaudado += parseFloat(pago.VALOR);
+                });
+
+                // Actualizar el total recaudado en la interfaz
+                if (medioPago === 'Efectivo') {
+                    document.getElementById('totalRecaudado').textContent = 'TOTAL RECAUDADO $' + totalRecaudado.toFixed(0);
+                } else if (medioPago === 'Cheque') {
+                    document.getElementById('totalRecaudadoCheque').textContent = 'TOTAL RECAUDADO $' + totalRecaudado.toFixed(0);
+                } else if (medioPago === 'Debito') {
+                    document.getElementById('totalRecaudadoDebito').textContent = 'TOTAL RECAUDADO $' + totalRecaudado.toFixed(0);
+                } else if (medioPago === 'Credito') {
+                    document.getElementById('totalRecaudadoCredito').textContent = 'TOTAL RECAUDADO $' + totalRecaudado.toFixed(0);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    } else {
+        alert('Por favor, seleccione un medio de pago y una fecha válida.');
+    }
 });
 
-function actualizarTabla(datos, idTabla, medioPago) {
-    var tabla = document.getElementById(idTabla);
-    var html = '';
-    var total = 0;
-    // Objeto de mapeo para convertir números a texto para los medios de pago
-    var mediosDePago = {
-        '1': 'Efectivo',
-        '2': 'Tarjeta POS',
-        '3': 'Cheque',
-        '4': 'Khipu'
-    };
-    // Mapeo de estados
-    var estados = {
-        '1': 'Pagado'
-        // Aquí puedes agregar más estados si los hay
-    };
 
-    datos.forEach(function(fila) {
-        var medioPagoTexto = mediosDePago[fila.medio_de_pago] || fila.medio_de_pago;
-        var estadoTexto = estados[fila.estado] || fila.estado; // Usa la representación de texto del estado
-        if (fila.medio_de_pago == medioPago) {
-            total += parseFloat(fila.valor);
-            html += `<tr>
-                        <td>${fila.fecha_pago}</td>
-                        <td>${fila.valor}</td>
-                        <td>${medioPagoTexto}</td>
-                        <td>${fila.tipo_documento}</td>
-                        <td>${estadoTexto}</td> <!-- Usa estadoTexto aquí -->
-                        <td>${fila.rut_alumno}</td>
-                    </tr>`;
-        }
-    });
-
-    tabla.innerHTML = html;
-    return total;
-}
 
 
 document.getElementById('btnGenerarReporte').addEventListener('click', function() {
