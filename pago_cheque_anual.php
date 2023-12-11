@@ -93,6 +93,8 @@ ORDER BY
     <title>Portal de Pago</title>
     <!-- Agrega los enlaces a los estilos de Bootstrap -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     
 </head>
 <body>
@@ -576,8 +578,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btnRegistrarPago').addEventListener('click', function() {
     var pagosSeleccionados = document.querySelectorAll('.seleccionarPago:checked');
     var pagos = [];
+    var datosParaPDF = []; // Array para almacenar los datos que irán en el PDF
 
-    pagosSeleccionados.forEach(function(checkbox) {
+    pagosSeleccionados.forEach(function(checkbox, index) {
         var idPago = checkbox.getAttribute('data-id-pago');
         var fila = checkbox.closest('tr'); // Encuentra la fila del checkbox
 
@@ -585,7 +588,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var nDocumento = fila.querySelector('[name="nDocumentoCheque[]"]').value;
         var monto = fila.querySelector('[name="montoCheque[]"]').value;
         var fechaEmision = fila.querySelector('[name="fechaEmisionCheque[]"]').value;
-        console.log("fechaEmision:", fechaEmision);
         var fechaDeposito = fila.querySelector('[name="fechaDepositoCheque[]"]').value;
 
         var fechaCobro = new Date(fechaEmision);
@@ -606,6 +608,18 @@ document.addEventListener('DOMContentLoaded', function() {
             tipoDocumento: 'CHEQUE',
             nCuotas: 1
         });
+
+        // Agregar datos al array para el PDF
+        datosParaPDF.push({
+            'Cuota': index + 1,
+            'Fecha Vencimiento': fila.cells[1].innerText,
+            'Monto Cuota': fila.cells[2].innerText,
+            'Banco Cheque': banco,
+            'Número Documento': nDocumento,
+            'Monto Cheque': monto,
+            'Fecha Emisión': fechaEmision,
+            'Fecha Depósito': fechaDeposito
+        });
     });
 
     // Envía los datos al servidor mediante una solicitud AJAX
@@ -614,8 +628,8 @@ document.addEventListener('DOMContentLoaded', function() {
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.onload = function() {
         if (xhr.status === 200) {
-            // Haz algo con la respuesta
             alert('Pago registrado con éxito.');
+            generarPDF(datosParaPDF); // Llamar a la función para generar el PDF
         } else {
             alert('Error al registrar el pago.');
         }
@@ -623,7 +637,23 @@ document.addEventListener('DOMContentLoaded', function() {
     xhr.send(JSON.stringify({pagos: pagos}));
 });
 
+function generarPDF(datos) {
+    var doc = new jspdf.jsPDF();
+    var total = datos.reduce((acc, pago) => acc + parseFloat(pago['Monto Cuota'].replace(/[^0-9.-]+/g,"")), 0); // Calcula el total
 
+    doc.setFontSize(18);
+    doc.text('Recibo de Pagos', 14, 20);
+    doc.setFontSize(12);
+    doc.text('Total: $' + total.toFixed(0), 14, 30);
+
+    doc.autoTable({ 
+        startY: 35,
+        head: [['Cuota', 'Fecha Vencimiento', 'Monto Cuota', 'Banco Cheque', 'Número Documento', 'Monto Cheque', 'Fecha Emisión', 'Fecha Depósito']],
+        body: datos.map(pago => [pago['Cuota'], pago['Fecha Vencimiento'], pago['Monto Cuota'], pago['Banco Cheque'], pago['Número Documento'], pago['Monto Cheque'], pago['Fecha Emisión'], pago['Fecha Depósito']])
+    });
+
+    doc.save('recibo_pagos_cuotas.pdf');
+}
 </script>
 
 </body>

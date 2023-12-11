@@ -3,7 +3,7 @@
         'name' => 'dnetix/redirection',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '8fbc666553b9d89a389b4019ea6500382b7df272',
+        'reference' => '77acf9b5065c42c8303c128d4570211a52a17421',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -31,7 +31,7 @@
         'dnetix/redirection' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '8fbc666553b9d89a389b4019ea6500382b7df272',
+            'reference' => '77acf9b5065c42c8303c128d4570211a52a17421',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
