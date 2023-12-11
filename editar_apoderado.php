@@ -48,6 +48,7 @@ if (isset($_POST['actualizar_apoderado'])) {
     $fonoPart = $_POST['telefonoParticular'];
     $mailPart = $_POST['correoElectronicoPersonal'];
     $mailLab = $_POST['correoElectronicoTrabajo'];
+    $rut = $_POST['rut'];
     $tutorAcademico = isset($_POST['tutorAcademico']) ? 1 : 0;
 
     // Necesitas encontrar el ID_REGION correspondiente a esta comuna
@@ -61,8 +62,8 @@ if (isset($_POST['actualizar_apoderado'])) {
         $idRegion = $filaRegion['ID_REGION'];
 
         // Actualiza los datos en la base de datos con el ID_COMUNA e ID_REGION
-        $stmtActualizar = $conn->prepare("UPDATE APODERADO SET PARENTESCO = ?, NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, FECHA_NAC = ?, CALLE = ?, NRO_CALLE = ?, OBS_DIRECCION = ?, VILLA = ?, ID_COMUNA = ?, ID_REGION = ?, FONO_PART = ?, MAIL_PART = ?, MAIL_LAB = ?, TUTOR_ACADEMICO = ? WHERE RUT_APODERADO = ?");
-        $stmtActualizar->bind_param("ssssssssssssssss", $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $comuna, $idRegion, $fonoPart, $mailPart, $mailLab, $tutorAcademico, $rutOriginal);
+        $stmtActualizar = $conn->prepare("UPDATE APODERADO SET PARENTESCO = ?, NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, FECHA_NAC = ?, CALLE = ?, NRO_CALLE = ?, OBS_DIRECCION = ?, VILLA = ?, ID_COMUNA = ?, ID_REGION = ?, FONO_PART = ?, MAIL_PART = ?, MAIL_LAB = ?, TUTOR_ACADEMICO = ?, RUT_APODERADO = ? WHERE RUT_APODERADO = ?");
+        $stmtActualizar->bind_param("sssssssssssssssss", $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $comuna, $idRegion, $fonoPart, $mailPart, $mailLab, $tutorAcademico, $rut,  $rutOriginal);
         $stmtActualizar->execute();
 
         if ($stmtActualizar->affected_rows > 0) {
@@ -110,6 +111,11 @@ if ($apoderado != null) {
                             <div class="form-group">
                                 <label for="parentesco">Parentesco</label>
                                 <input type="text" class="form-control" name="parentesco" value="<?php echo $apoderado['PARENTESCO']; ?>">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="nombre">RUT</label>
+                                <input type="text" class="form-control" name="rut" value="<?php echo $apoderado['RUT_APODERADO']; ?>">
                             </div>
 
                             <div class="form-group">
