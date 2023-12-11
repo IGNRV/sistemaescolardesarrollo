@@ -5,6 +5,16 @@ $saldoPeriodoAnterior = [];
 $cuotasPeriodoActual = [];
 $mensaje = '';
 
+$bancos = [];
+$stmtBancos = $conn->prepare("SELECT NOMBRE_BANCO FROM BANCOS");
+$stmtBancos->execute();
+$resultadoBancos = $stmtBancos->get_result();
+
+while ($banco = $resultadoBancos->fetch_assoc()) {
+    $bancos[] = $banco['NOMBRE_BANCO'];
+}
+$stmtBancos->close();
+
 if (isset($_POST['btnBuscarAlumno'])) {
     $rutAlumno = $_POST['rutAlumno'];
     $fechaActual = date('Y-m-d');
@@ -262,7 +272,14 @@ ORDER BY
                             </div>
                             <div class="form-group">
                                 <label for="bancoCheque">Banco</label>
-                                <input type="text" class="form-control" id="bancoCheque" placeholder="Ingrese el banco">
+                                <select class="form-control" id="bancoCheque" name="bancoCheque">
+                                    <option value="">Seleccione un banco</option>
+                                    <?php foreach ($bancos as $nombreBanco): ?>
+                                        <option value="<?php echo htmlspecialchars($nombreBanco); ?>">
+                                            <?php echo htmlspecialchars($nombreBanco); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="montoCheque">Monto</label>
@@ -435,7 +452,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var tipoDocumentoCheque = document.getElementById('tipoDocumentoCheque').value;
         var numeroDocumentoCheque = document.getElementById('numeroDocumentoCheque').value;
         var fechaEmisionCheque = document.getElementById('fechaEmisionCheque').value;
-        
+        var bancoSeleccionado = document.getElementById('bancoCheque').value;
+
 
         if (montoEfectivo + montoPos + montoCheque !== totalAPagar) {
             alert('La suma de los montos no coincide con el total a pagar.');
@@ -464,7 +482,8 @@ document.addEventListener('DOMContentLoaded', function() {
             montoEfectivo: montoEfectivo,
             montoPos: montoPos,
             montoCheque: montoCheque,
-            fechaPago: new Date().toISOString().split('T')[0]
+            fechaPago: new Date().toISOString().split('T')[0],
+            bancoSeleccionado: bancoSeleccionado
         };
 
         var xhr = new XMLHttpRequest();

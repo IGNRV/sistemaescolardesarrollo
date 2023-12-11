@@ -41,8 +41,8 @@ function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales,
     $medioPago = ($tipoDocumento == 'POS') ? $adicionales['tipoDocumentoPos'] : $tipoDocumento;
     $nCuotas = ($tipoDocumento == 'POS' && !empty($adicionales['cuotasPos'])) ? $adicionales['cuotasPos'] : 0;
 
-    $stmt = $conn->prepare("INSERT INTO DETALLES_TRANSACCION (ANO, CODIGO_PRODUCTO, FOLIO_PAGO, VALOR, FECHA_PAGO, MEDIO_DE_PAGO, N_CUOTAS, ESTADO, FECHA_VENCIMIENTO, TIPO_DOCUMENTO, NUMERO_DOCUMENTO, FECHA_EMISION, FECHA_COBRO, ID_PAGO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("sissssissssssi", $ano, $codigoProducto, $folioPago, $valor, $fechaPago, $medioPago, $nCuotas, $estado, $fechaVencimiento, $tipoDocumento, $numeroDocumento, $fechaEmision, $fechaCobro, $idPago);
+    $stmt = $conn->prepare("INSERT INTO DETALLES_TRANSACCION (ANO, CODIGO_PRODUCTO, FOLIO_PAGO, VALOR, FECHA_PAGO, MEDIO_DE_PAGO, N_CUOTAS, ESTADO, FECHA_VENCIMIENTO, TIPO_DOCUMENTO, NUMERO_DOCUMENTO, FECHA_EMISION, FECHA_COBRO, BANCO, ID_PAGO) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sissssisssssssi", $ano, $codigoProducto, $folioPago, $valor, $fechaPago, $medioPago, $nCuotas, $estado, $fechaVencimiento, $tipoDocumento, $numeroDocumento, $fechaEmision, $fechaCobro, $banco, $idPago);
 
     // Asignaciones comunes
     $ano = date('Y');
@@ -68,6 +68,8 @@ function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales,
         // Actualizar $fechaEmision y $fechaCobro para reflejar la fecha de emisión del cheque y la fecha de cobro
         $fechaEmision = $fechaEmisionCheque;
         $fechaCobro = $fechaEmisionDateTime->format('Y-m-d');
+        $banco = $adicionales['bancoSeleccionado']; // Añadir esta línea
+        
     }
 
     $stmt->execute();
