@@ -5,29 +5,32 @@ $data = json_decode(file_get_contents('php://input'), true);
 
 if (!empty($data['pagos'])) {
     $adicionales = $data['adicionales'];
+    $folioPago = obtenerUltimoFolioPago($conn);
 
     foreach ($data['pagos'] as $pago) {
-        procesarPago($pago, $adicionales, $conn);
+        procesarPago($pago, $adicionales, $folioPago, $conn);
     }
-    echo 'Pago registrado con éxito.';
+    echo json_encode(['mensaje' => 'Pago registrado con éxito.', 'folioPago' => $folioPago]);
 } else {
-    echo 'No hay pagos para procesar.';
+    echo json_encode(['mensaje' => 'No hay pagos para procesar.']);
 }
 
-function procesarPago($pago, $adicionales, $conn) {
+function procesarPago($pago, $adicionales, $folioPago, $conn) {
+    $folioPago = obtenerUltimoFolioPago($conn);
+
     if ($adicionales['montoEfectivo'] > 0) {
-        insertarDetalleTransaccion($pago, 'EFECTIVO', $adicionales['montoEfectivo'], $adicionales, $conn);
+        insertarDetalleTransaccion($pago, 'EFECTIVO', $adicionales['montoEfectivo'], $adicionales, $folioPago, $conn);
     }
     if ($adicionales['montoPos'] > 0) {
-        insertarDetalleTransaccion($pago, 'POS', $adicionales['montoPos'], $adicionales, $conn);
+        insertarDetalleTransaccion($pago, 'POS', $adicionales['montoPos'], $adicionales, $folioPago, $conn);
     }
     if ($adicionales['montoCheque'] > 0) {
-        insertarDetalleTransaccion($pago, 'CHEQUE', $adicionales['montoCheque'], $adicionales, $conn);
+        insertarDetalleTransaccion($pago, 'CHEQUE', $adicionales['montoCheque'], $adicionales, $folioPago, $conn);
     }
     actualizarHistorialPagos($pago, $conn);
 }
 
-function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales, $conn) {
+function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales, $folioPago, $conn) {
     // El número de documento varía según el tipo de pago
     if ($tipoDocumento == 'EFECTIVO') {
         $numeroDocumento = obtenerSiguienteNumeroDocumentoParaEfectivo($conn);
@@ -47,7 +50,6 @@ function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales,
     // Asignaciones comunes
     $ano = date('Y');
     $codigoProducto = $pago['codigoProducto'];
-    $folioPago = $pago['folioPago'];
     $valor = $monto;
     $fechaPago = $adicionales['fechaPago'];
     $estado = 1;
@@ -96,4 +98,12 @@ function obtenerSiguienteNumeroDocumento($conn) {
     $fila = $resultado->fetch_assoc();
     return $fila['ultimoNumero'] + 1;
 }
+function obtenerUltimoFolioPago($conn) {
+    // Selecciona el mayor folioPago y lo incrementa en la base de datos
+    $resultado = $conn->query("SELECT MAX(FOLIO_PAGO) + 1 AS siguienteFolio FROM DETALLES_TRANSACCION");
+    $fila = $resultado->fetch_assoc();
+    // Si no hay folios, comienza en 1, de lo contrario toma el siguiente folio
+    return $fila['siguienteFolio'] ?? 1;
+}
+
 ?>

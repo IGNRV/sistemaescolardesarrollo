@@ -491,7 +491,9 @@ document.addEventListener('DOMContentLoaded', function() {
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onload = function() {
             if (xhr.status === 200) {
-                alert('Pago registrado con éxito.');
+                var response = JSON.parse(xhr.responseText);
+                alert(response.mensaje);
+                window.folioPago = response.folioPago; // Almacena el folioPago para su uso posterior
                 generarPDF(); // Llamar a la función para generar el PDF
             } else {
                 alert('Error al registrar el pago.');
@@ -561,9 +563,16 @@ document.addEventListener('DOMContentLoaded', function() {
     doc.setFontSize(12);
     doc.text('Total: $' + totalAPagar.toFixed(0), 14, 30);
 
-    // Actualizar las cabeceras de la tabla para incluir los nuevos campos
-    doc.autoTable({ 
-        startY: 35,
+    // Asegúrate de que el texto del folio tenga suficiente espacio y no sea tapado por la tabla
+    var espacioParaFolio = 10; // Espacio adicional para el folio
+    var posicionYFolio = 40;
+    doc.text('Número de Folio: ' + window.folioPago, 14, posicionYFolio);
+
+    // Ajusta la posición de inicio de la tabla para que esté por debajo del folio
+    var posicionInicioTabla = posicionYFolio + espacioParaFolio;
+
+    doc.autoTable({
+        startY: posicionInicioTabla,
         head: [['Cuota', 'Fecha Vencimiento', 'Monto', 'Fecha de Pago', 'Estado']],
         body: datosParaPDF
     });
