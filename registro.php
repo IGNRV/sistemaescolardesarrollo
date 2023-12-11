@@ -1,26 +1,24 @@
 <?php
 require_once 'db.php';
 
-// Variable para almacenar el mensaje de error
 $errorMsg = '';
 
-// Verifica si el formulario ha sido enviado
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $rut = $conn->real_escape_string($_POST['rut']);
     $nombre = $conn->real_escape_string($_POST['nombre']);
+    $usuario = $conn->real_escape_string($_POST['usuario']);
     $correo_electronico = $conn->real_escape_string($_POST['correo_electronico']);
     $password = $conn->real_escape_string($_POST['password']);
     $passwordEncriptada = password_hash($password, PASSWORD_DEFAULT); // Encriptación de la contraseña
 
-    // Verifica si el usuario ya existe en la base de datos (basado en el campo 'usuario', 'correo_electronico' o 'rut', según lo que desees)
-    $checkUser = "SELECT id FROM usuarios WHERE correo_electronico = '{$correo_electronico}' OR rut = '{$rut}'";
+    // Verifica si el correo electrónico ya está registrado
+    $checkUser = "SELECT ID FROM USERS WHERE EMAIL = '{$correo_electronico}'";
     $result = $conn->query($checkUser);
 
     if ($result->num_rows > 0) {
-        $errorMsg = "El usuario ya existe.";
+        $errorMsg = "El usuario ya existe con ese correo electrónico.";
     } else {
-        // Agrega el nuevo usuario a la base de datos
-        $insertUser = "INSERT INTO usuarios (rut, nombre, correo_electronico, password, fperfil) VALUES ('{$rut}', '{$nombre}', '{$correo_electronico}', '{$passwordEncriptada}', '22_Profile.jpg')";
+        // Inserta el nuevo usuario en la base de datos
+        $insertUser = "INSERT INTO USERS (NAME, EMAIL, USERNAME, PASSWORD, PHOTO, STATUS) VALUES ('{$nombre}', '{$correo_electronico}', '{$usuario}', '{$passwordEncriptada}', '22_Profile.jpg', 'ACTIVO')";
         if ($conn->query($insertUser) === TRUE) {
             header('Location: login.php');
             exit;
@@ -29,7 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 }
+// Aquí va el resto del código HTML para tu formulario
 ?>
+
 
 <!DOCTYPE html>
 <html lang="es">
@@ -72,8 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <h2 class="text-center">Registro de Usuario</h2>
                     <form method="post" action="registro.php" class="mt-4">
                         <div class="form-group">
-                            <label for="rut">RUT:</label>
-                            <input type="text" class="form-control" name="rut" required>
+                            <label for="usuario">Usuario:</label>
+                            <input type="text" class="form-control" name="usuario" required>
                         </div>
                         <div class="form-group">
                             <label for="nombre">Nombre:</label>

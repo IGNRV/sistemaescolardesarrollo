@@ -95,9 +95,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </form>
 
                     <!-- Enlace para registrarse -->
-                    <div class="text-center mt-3">
+                    <!-- <div class="text-center mt-3">
                         <a href="registro.php">¿No tienes una cuenta? Regístrate aquí</a>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>
