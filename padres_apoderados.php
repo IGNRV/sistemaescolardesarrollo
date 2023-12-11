@@ -274,7 +274,7 @@ if (isset($_SESSION['mensaje_exito'])) {
             <input type="email" class="form-control" name="correoElectronicoTrabajo">
         </div>
         <div class="form-group">
-            <label for="tutorAcademico">Tutor académico</label>
+            <label for="tutorAcademico">Tutor economico</label>
             <input type="checkbox" id="tutorAcademico" name="tutorAcademico" value="1">
         </div>
         <button type="submit" class="btn btn-primary btn-block custom-button" name="actualizar_datos">AGREGAR APODERADO</button>

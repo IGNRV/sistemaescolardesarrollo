@@ -184,7 +184,7 @@ if ($apoderado != null) {
                             </div>
 
                             <div class="form-group">
-                                <label for="tutorAcademico">Tutor Académico</label>
+                                <label for="tutorAcademico">Tutor Economico</label>
                                 <input type="checkbox" id="tutorAcademico" name="tutorAcademico" value="1" <?php echo $apoderado['TUTOR_ACADEMICO'] ? 'checked' : ''; ?>>
                             </div>
 
