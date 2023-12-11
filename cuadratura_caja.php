@@ -91,7 +91,6 @@ ini_set('display_errors', 1);
                                     <th>Medio de Pago</th>
                                     <th>Tipo Documento</th>
                                     <th>Estado</th>
-                                    <th>RUT Alumno</th>
                                 </tr>
                             </thead>
                             <tbody id="tablaEfectivo">
@@ -102,7 +101,6 @@ ini_set('display_errors', 1);
                                     <td>Medio de Pago</td>
                                     <td>Tipo de Documento</td>
                                     <td>Estado</td>
-                                    <td>RUT del Alumno</td>
                                 </tr>
                                 <!-- Puedes agregar más filas según sea necesario -->
                             </tbody>
@@ -131,7 +129,6 @@ ini_set('display_errors', 1);
                                 <th>Medio de Pago</th>
                                 <th>Tipo Documento</th>
                                 <th>Estado</th>
-                                <th>RUT Alumno</th>
                             </tr>
                         </thead>
                         <tbody id="tablaCheque">
@@ -142,7 +139,6 @@ ini_set('display_errors', 1);
                                 <td>Medio de Pago</td>
                                 <td>Tipo de Documento</td>
                                 <td>Estado</td>
-                                <td>RUT del Alumno</td>
                             </tr>
                             <!-- Puedes agregar más filas según sea necesario -->
                         </tbody>
@@ -168,7 +164,6 @@ ini_set('display_errors', 1);
                                 <th>Medio de Pago</th>
                                 <th>Tipo Documento</th>
                                 <th>Estado</th>
-                                <th>RUT Alumno</th>
                             </tr>
                         </thead>
                         <tbody id="tablaDebito">
@@ -179,7 +174,6 @@ ini_set('display_errors', 1);
                                 <td>Medio de Pago</td>
                                 <td>Tipo de Documento</td>
                                 <td>Estado</td>
-                                <td>RUT del Alumno</td>
                             </tr>
                             <!-- Puedes agregar más filas según sea necesario -->
                         </tbody>
@@ -205,7 +199,6 @@ ini_set('display_errors', 1);
                                 <th>Medio de Pago</th>
                                 <th>Tipo Documento</th>
                                 <th>Estado</th>
-                                <th>RUT Alumno</th>
                             </tr>
                         </thead>
                         <tbody id="tablaCredito">
@@ -216,7 +209,6 @@ ini_set('display_errors', 1);
                                 <td>Medio de Pago</td>
                                 <td>Tipo de Documento</td>
                                 <td>Estado</td>
-                                <td>RUT del Alumno</td>
                             </tr>
                             <!-- Puedes agregar más filas según sea necesario -->
                         </tbody>
@@ -263,13 +255,14 @@ document.getElementById('btnBuscar').addEventListener('click', function() {
 
                 // Iterar a través de los datos y actualizar la tabla correspondiente
                 datos.forEach(function(pago) {
+                    let estadoTexto = pago.ESTADO === '1' ? 'PAGADA' : pago.ESTADO;
+
                     var fila = `<tr>
                         <td>${pago.FECHA_PAGO}</td>
                         <td>${pago.VALOR}</td>
                         <td>${pago.MEDIO_DE_PAGO}</td>
                         <td>${pago.TIPO_DOCUMENTO}</td>
-                        <td>${pago.ESTADO}</td>
-                        <td>${pago.RUT_ALUMNO}</td>
+                        <td>${estadoTexto}</td>
                     </tr>`;
                     tabla.innerHTML += fila;
 
@@ -286,6 +279,8 @@ document.getElementById('btnBuscar').addEventListener('click', function() {
                 } else if (medioPago === 'Credito') {
                     document.getElementById('totalRecaudadoCredito').textContent = 'TOTAL RECAUDADO $' + totalRecaudado.toFixed(0);
                 }
+                actualizarTotalGeneral();
+
             })
             .catch(error => console.error('Error:', error));
     } else {
@@ -350,6 +345,19 @@ document.getElementById('btnGenerarReporte').addEventListener('click', function(
     // Guardar el PDF
     doc.save('reporte_cuadratura.pdf');
 });
+
+function actualizarTotalGeneral() {
+    let totalGeneral = 0;
+    const idsTotales = ['totalRecaudado', 'totalRecaudadoCheque', 'totalRecaudadoDebito', 'totalRecaudadoCredito'];
+
+    idsTotales.forEach(id => {
+        let totalTexto = document.getElementById(id).textContent;
+        let totalValor = parseFloat(totalTexto.replace('TOTAL RECAUDADO $', '').trim()) || 0;
+        totalGeneral += totalValor;
+    });
+
+    document.getElementById('totalRecaudadoGeneral').textContent = 'TOTAL RECAUDADO $' + totalGeneral.toFixed(0);
+}
 
 </script>
 
