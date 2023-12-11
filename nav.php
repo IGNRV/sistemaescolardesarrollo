@@ -45,6 +45,9 @@
 <li class="nav-item">
     <a class="nav-link" href="bienvenido.php?page=pago_rut_alumno">Pago con RUT</a>
 </li>
+<li class="nav-item">
+    <a class="nav-link" href="bienvenido.php?page=pago_cheque_anual">Pago Anual con Cheques</a>
+</li>
 
             <li class="nav-item">
                 <a class="nav-link" href="logout.php">Cerrar sesión</a>

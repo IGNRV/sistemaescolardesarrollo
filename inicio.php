@@ -11,6 +11,8 @@
         <a href="bienvenido.php?page=padres_apoderados" class="btn btn-outline-primary custom-button m-2">Padres/Apoderados</a>
         <a href="bienvenido.php?page=tutor_economico" class="btn btn-outline-primary custom-button m-2">Tutor Económico</a>
         <a href="bienvenido.php?page=pago_electronico" class="btn btn-outline-primary custom-button m-2">Pago Electrónico</a>
+        <a href="bienvenido.php?page=pago_cheque_anual" class="btn btn-outline-primary custom-button m-2">Pago Anual con Cheques</a>
+        <a href="bienvenido.php?page=pago_rut_alumno" class="btn btn-outline-primary custom-button m-2">Pago con RUT</a>
         <a href="logout.php" class="btn btn-outline-danger custom-button m-2">Cerrar Sesión</a>
     </div>
 </div>
