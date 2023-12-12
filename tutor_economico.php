@@ -172,7 +172,7 @@ if (!empty($mensaje)) {
     echo '<div class="alert alert-success">' . htmlspecialchars($mensaje) . '</div>';
 }
 
-if (isset($_POST['ACTUALIZAR_DATOS'])) { // Asegúrate de que este nombre de input coincide con el atributo "name" del botón de actualización
+if (isset($_POST['ACTUALIZAR_DATOS'])) {
     $rutOriginal = $_POST['rut_original'];
     $rutTutor = $_POST['rut']; // Asume que 'rut' es el nombre del campo en tu formulario
     $nombreTutor = $_POST['nombre'];
@@ -231,6 +231,22 @@ if (isset($_POST['ACTUALIZAR_DATOS'])) { // Asegúrate de que este nombre de inp
         $mensaje = "No se realizaron cambios en los datos del tutor económico.";
     }
     $stmtActualizar->close();
+
+    // Restablecer las variables después de actualizar
+    $rutTutor = '';
+    $nombreTutor = '';
+    $apPaternoTutor = '';
+    $apMaternoTutor = '';
+    $telefonoParticular = '';
+    $telefonoTrabajo = '';
+    $calle = '';
+    $nCalle = '';
+    $restoDireccion = '';
+    $villaPoblacion = '';
+    $comuna = '';
+    $ciudad = '';
+    $correoPersonal = '';
+    $correoTrabajo = '';
 
     // Muestra el mensaje resultante
     if (!empty($mensaje)) {
