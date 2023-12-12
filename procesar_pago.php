@@ -17,6 +17,8 @@ if (!empty($data['pagos'])) {
 
 function procesarPago($pago, $adicionales, $folioPago, $conn) {
     $folioPago = obtenerUltimoFolioPago($conn);
+    $totalPagado = $adicionales['montoEfectivo'] + $adicionales['montoPos'] + $adicionales['montoCheque'];
+
 
     if ($adicionales['montoEfectivo'] > 0) {
         insertarDetalleTransaccion($pago, 'EFECTIVO', $adicionales['montoEfectivo'], $adicionales, $folioPago, $conn);
@@ -27,7 +29,7 @@ function procesarPago($pago, $adicionales, $folioPago, $conn) {
     if ($adicionales['montoCheque'] > 0) {
         insertarDetalleTransaccion($pago, 'CHEQUE', $adicionales['montoCheque'], $adicionales, $folioPago, $conn);
     }
-    actualizarHistorialPagos($pago, $conn);
+    actualizarHistorialPagos($pago['idPago'], $totalPagado, $conn);
 }
 
 function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales, $folioPago, $conn) {
@@ -80,14 +82,30 @@ function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales,
     $stmt->close();
 }
 
-function actualizarHistorialPagos($pago, $conn) {
+function actualizarHistorialPagos($idPago, $totalPagado, $conn) {
+    // Primero, obtenemos el valor actual a pagar
+    $stmtSelect = $conn->prepare("SELECT VALOR_A_PAGAR FROM HISTORIAL_PAGOS WHERE ID_PAGO = ?");
+    $stmtSelect->bind_param("i", $idPago);
+    $stmtSelect->execute();
+    $resultado = $stmtSelect->get_result();
+    $fila = $resultado->fetch_assoc();
+    $valorAPagar = $fila['VALOR_A_PAGAR'];
+
+    // Restamos el total pagado del valor a pagar
+    $nuevoValorAPagar = $valorAPagar - $totalPagado;
+
+    // Preparamos la consulta de actualización
+    $stmtUpdate = $conn->prepare("UPDATE HISTORIAL_PAGOS SET VALOR_A_PAGAR = ?, ESTADO_PAGO = ?, FECHA_PAGO = ? WHERE ID_PAGO = ?");
+
+    // Determinamos el estado de pago
+    $estadoPago = ($nuevoValorAPagar == 0) ? 2 : 1; // Aquí puedes ajustar la lógica según necesites
+
     $fechaActual = date('Y-m-d');
-    $stmtUpdate = $conn->prepare("UPDATE HISTORIAL_PAGOS SET ESTADO_PAGO = 2, FECHA_PAGO = ? WHERE ID_PAGO = ?");
-    $stmtUpdate->bind_param("si", $fechaActual, $idPago);
-    $idPago = $pago['idPago'];
+    $stmtUpdate->bind_param("iisi", $nuevoValorAPagar, $estadoPago, $fechaActual, $idPago);
     $stmtUpdate->execute();
     $stmtUpdate->close();
 }
+
 
 function obtenerSiguienteNumeroDocumentoParaEfectivo($conn) {
     $resultado = $conn->query("SELECT MAX(NUMERO_DOCUMENTO) AS ultimoNumero FROM DETALLES_TRANSACCION WHERE MEDIO_DE_PAGO IN ('EFECTIVO', 'TRANSFERENCIA', 'DEPOSITO DIRECTO')");

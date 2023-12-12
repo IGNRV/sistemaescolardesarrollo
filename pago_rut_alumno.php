@@ -145,7 +145,7 @@ if (isset($_POST['btnBuscarAlumno'])) {
                 <tr>
                     <td><?php echo $index + 1; ?></td>
                     <td><?php echo htmlspecialchars($pago['FECHA_VENCIMIENTO']); ?></td>
-                    <td><?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?></td>
+                    <td><?php echo htmlspecialchars($pago['VALOR_A_PAGAR']); ?></td>
                     <td><?php echo htmlspecialchars($pago['MEDIO_PAGO']); ?></td>
                     <td><?php echo htmlspecialchars($pago['FECHA_PAGO']); ?></td>
                     <td>
@@ -159,9 +159,9 @@ if (isset($_POST['btnBuscarAlumno'])) {
                     </td>
                     <td>
                         <?php if ($pago['ESTADO_PAGO'] != 2): ?>
-                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>">
+                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_A_PAGAR']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>">
                         <?php else: ?>
-                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>" disabled>
+                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_A_PAGAR']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>" disabled>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -190,7 +190,7 @@ if (isset($_POST['btnBuscarAlumno'])) {
                 <tr>
                     <td><?php echo $index + 1; ?></td>
                     <td><?php echo htmlspecialchars($pago['FECHA_VENCIMIENTO']); ?></td>
-                    <td><?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?></td>
+                    <td><?php echo htmlspecialchars($pago['VALOR_A_PAGAR']); ?></td>
                     <td><?php echo htmlspecialchars($pago['MEDIO_PAGO']); ?></td>
                     <td><?php echo htmlspecialchars($pago['FECHA_PAGO']); ?></td>
                     <td>
@@ -204,9 +204,9 @@ if (isset($_POST['btnBuscarAlumno'])) {
                     </td>
                     <td>
                         <?php if ($pago['ESTADO_PAGO'] != 2): ?>
-                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>">
+                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_A_PAGAR']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>">
                         <?php else: ?>
-                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_ARANCEL']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>" disabled>
+                            <input type="checkbox" class="seleccionarPago" value="<?php echo htmlspecialchars($pago['VALOR_A_PAGAR']); ?>" data-id-pago="<?php echo $pago['ID_PAGO']; ?>" disabled>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -457,10 +457,10 @@ document.addEventListener('DOMContentLoaded', function() {
         var bancoSeleccionado = document.getElementById('bancoCheque').value;
 
 
-        if (montoEfectivo + montoPos + montoCheque !== totalAPagar) {
+       /*  if (montoEfectivo + montoPos + montoCheque !== totalAPagar) {
             alert('La suma de los montos no coincide con el total a pagar.');
             return;
-        }
+        } */
 
         var pagosSeleccionados = document.querySelectorAll('.seleccionarPago:checked');
         var datosPagos = Array.from(pagosSeleccionados).map(function(checkbox) {
