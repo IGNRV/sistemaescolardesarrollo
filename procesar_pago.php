@@ -32,8 +32,10 @@ function procesarPago($pago, $adicionales, $folioPago, $conn) {
 
 function insertarDetalleTransaccion($pago, $tipoDocumento, $monto, $adicionales, $folioPago, $conn) {
     // El número de documento varía según el tipo de pago
+    $numeroDocumento = null;
     if ($tipoDocumento == 'EFECTIVO') {
         $numeroDocumento = obtenerSiguienteNumeroDocumentoParaEfectivo($conn);
+        $tipoDocumento = $adicionales['tipoDocumentoEfectivo']; // Aquí usas la selección del formulario
     } elseif ($tipoDocumento == 'POS') {
         $numeroDocumento = $adicionales['numeroComprobantePos'];
     } else { // CHEQUE
@@ -88,7 +90,7 @@ function actualizarHistorialPagos($pago, $conn) {
 }
 
 function obtenerSiguienteNumeroDocumentoParaEfectivo($conn) {
-    $resultado = $conn->query("SELECT MAX(NUMERO_DOCUMENTO) AS ultimoNumero FROM DETALLES_TRANSACCION WHERE MEDIO_DE_PAGO = 'EFECTIVO'");
+    $resultado = $conn->query("SELECT MAX(NUMERO_DOCUMENTO) AS ultimoNumero FROM DETALLES_TRANSACCION WHERE MEDIO_DE_PAGO IN ('EFECTIVO', 'TRANSFERENCIA', 'DEPOSITO DIRECTO')");
     $fila = $resultado->fetch_assoc();
     return $fila['ultimoNumero'] + 1;
 }

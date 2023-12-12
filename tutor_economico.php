@@ -43,6 +43,7 @@ $comuna = '';
 $ciudad = '';
 $correoPersonal = '';
 $correoTrabajo = '';
+$rutOriginal= '';
 
 // Asegúrate de que tienes esta consulta para obtener las comunas
 $consultaComunas = $conn->query("SELECT ID_COMUNA, NOM_COMUNA FROM COMUNA");
@@ -172,6 +173,7 @@ if (!empty($mensaje)) {
 }
 
 if (isset($_POST['ACTUALIZAR_DATOS'])) { // Asegúrate de que este nombre de input coincide con el atributo "name" del botón de actualización
+    $rutOriginal = $_POST['rut_original'];
     $rutTutor = $_POST['rut']; // Asume que 'rut' es el nombre del campo en tu formulario
     $nombreTutor = $_POST['nombre'];
     $apPaternoTutor = $_POST['apellido_paterno'];
@@ -190,6 +192,7 @@ if (isset($_POST['ACTUALIZAR_DATOS'])) { // Asegúrate de que este nombre de inp
     // Prepara la consulta SQL para actualizar los datos del apoderado
     $stmtActualizar = $conn->prepare("UPDATE APODERADO SET 
         NOMBRE = ?, 
+        RUT_APODERADO = ?,
         AP_PATERNO = ?, 
         AP_MATERNO = ?, 
         FONO_PART = ?, 
@@ -203,8 +206,9 @@ if (isset($_POST['ACTUALIZAR_DATOS'])) { // Asegúrate de que este nombre de inp
         MAIL_LAB = ?, 
         TUTOR_ECONOMICO = ?
         WHERE RUT_APODERADO = ?");
-    $stmtActualizar->bind_param("ssssssssssssis", 
+    $stmtActualizar->bind_param("sssssssssssssis", 
         $nombreTutor, 
+        $rutTutor,
         $apPaternoTutor, 
         $apMaternoTutor, 
         $telefonoParticular, 
@@ -217,14 +221,14 @@ if (isset($_POST['ACTUALIZAR_DATOS'])) { // Asegúrate de que este nombre de inp
         $correoPersonal, 
         $correoTrabajo, 
         $tutorEconomico,
-        $rutTutor);
+        $rutOriginal);
     $stmtActualizar->execute();
 
-    // Verifica si la actualización fue exitosa
     if ($stmtActualizar->affected_rows > 0) {
         $mensaje = "Datos del tutor económico actualizados correctamente.";
     } else {
-        $mensaje = "Error al actualizar los datos del tutor económico.";
+        // Si no hay cambios, envía un mensaje de éxito
+        $mensaje = "No se realizaron cambios en los datos del tutor económico.";
     }
     $stmtActualizar->close();
 
@@ -250,10 +254,12 @@ if (isset($_POST['ACTUALIZAR_DATOS'])) { // Asegúrate de que este nombre de inp
     </form>
     <h2>Datos tutor económico</h2>
     <form method="post">
-        <div class="form-group">
-            <label for="rutTutor">RUT</label>
-            <input type="text" class="form-control" name="rut" id="rutTutor" value="<?php echo htmlspecialchars($rutTutor); ?>" maxlength="10">
-        </div>
+    <input type="hidden" name="rut_original" value="<?php echo htmlspecialchars($rutTutor); ?>">
+
+    <div class="form-group">
+        <label for="rutTutor">RUT</label>
+        <input type="text" class="form-control" name="rut" id="rutTutor" value="<?php echo htmlspecialchars($rutTutor); ?>" maxlength="10">
+    </div>
         <div class="form-group">
             <label for="nombresTutor">Nombre</label>
             <input type="text" class="form-control" name="nombre" id="nombresTutor" value="<?php echo htmlspecialchars($nombreTutor); ?>">

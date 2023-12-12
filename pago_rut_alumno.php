@@ -241,8 +241,12 @@ if (isset($_POST['btnBuscarAlumno'])) {
                         <div id="seccionEfectivo" class="mt-4" style="display:none;">
                             <h4>PAGO CON EFECTIVO</h4>
                             <div class="form-group">
-                                <label for="tipoDocumento">Tipo Documento</label>
-                                <input type="text" class="form-control" id="tipoDocumento" placeholder="Ingrese el tipo de documento">
+                            <label for="tipoDocumento">Tipo Documento</label>
+                                <select class="form-control" id="tipoDocumento" name="tipoDocumento">
+                                    <option value="EFECTIVO">EFECTIVO</option>
+                                    <option value="TRANSFERENCIA">TRANSFERENCIA</option>
+                                    <option value="DEPOSITO DIRECTO">DEPOSITO DIRECTO</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="montoEfectivo">Monto</label>

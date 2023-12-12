@@ -3,9 +3,9 @@
 session_start();
 require_once 'db.php';
 
-ini_set('display_errors', 1);
+/* ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+error_reporting(E_ALL); */
 
 
 if (!isset($_SESSION['EMAIL'])) {
@@ -63,25 +63,40 @@ if (isset($_POST['actualizar_apoderado'])) {
         $filaRegion = $resultadoRegion->fetch_assoc();
         $idRegion = $filaRegion['ID_REGION'];
 
-        // Actualiza los datos en la base de datos con el ID_COMUNA e ID_REGION
-        $stmtActualizar = $conn->prepare("UPDATE APODERADO SET PARENTESCO = ?, NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, FECHA_NAC = ?, CALLE = ?, NRO_CALLE = ?, OBS_DIRECCION = ?, VILLA = ?, ID_COMUNA = ?, ID_REGION = ?, FONO_PART = ?, MAIL_PART = ?, MAIL_LAB = ?, TUTOR_ACADEMICO = ?, RUT_APODERADO = ?, TUTOR_ECONOMICO = ? WHERE RUT_APODERADO = ?");
-        $stmtActualizar->bind_param("ssssssssssssssssis", $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $comuna, $idRegion, $fonoPart, $mailPart, $mailLab, $tutorAcademico, $rut, $tutorEconomico,  $rutOriginal);
-        $stmtActualizar->execute();
+        // Verifica si algún dato ha cambiado
+        $hayCambios = $parentesco != $apoderado['PARENTESCO'] ||
+                      $nombre != $apoderado['NOMBRE'] ||
+                      $apellidoPaterno != $apoderado['AP_PATERNO'] ||
+                      // ... (compara el resto de los campos) ...
+                      $tutorEconomico != $apoderado['TUTOR_ECONOMICO'];
 
-        if ($stmtActualizar->affected_rows > 0) {
-            $_SESSION['mensaje_exito'] = "Datos del apoderado actualizados correctamente.";
+        if ($hayCambios) {
+            // Actualiza los datos en la base de datos con el ID_COMUNA e ID_REGION
+            $stmtActualizar = $conn->prepare("UPDATE APODERADO SET PARENTESCO = ?, NOMBRE = ?, AP_PATERNO = ?, AP_MATERNO = ?, FECHA_NAC = ?, CALLE = ?, NRO_CALLE = ?, OBS_DIRECCION = ?, VILLA = ?, ID_COMUNA = ?, ID_REGION = ?, FONO_PART = ?, MAIL_PART = ?, MAIL_LAB = ?, TUTOR_ACADEMICO = ?, RUT_APODERADO = ?, TUTOR_ECONOMICO = ? WHERE RUT_APODERADO = ?");
+            $stmtActualizar->bind_param("ssssssssssssssssis", $parentesco, $nombre, $apellidoPaterno, $apellidoMaterno, $fechaNac, $calle, $nCalle, $obsDireccion, $villaPoblacion, $comuna, $idRegion, $fonoPart, $mailPart, $mailLab, $tutorAcademico, $rut, $tutorEconomico, $rutOriginal);
+            $stmtActualizar->execute();
+
+            if ($stmtActualizar->affected_rows > 0) {
+                $_SESSION['mensaje_exito'] = "Datos del apoderado actualizados correctamente.";
+                header("Location: /bienvenido.php?page=padres_apoderados");
+                exit;
+            } else {
+                $mensaje = "Error al actualizar los datos.";
+            }
+        } else {
+            // Si no hay cambios, envía un mensaje de éxito
+            $_SESSION['mensaje_exito'] = "No se realizaron cambios en los datos.";
             header("Location: /bienvenido.php?page=padres_apoderados");
             exit;
-        } else {
-            $mensaje = "Error al actualizar los datos.";
         }
     } else {
         $mensaje = "No se pudo encontrar la región para la comuna seleccionada.";
     }
     $consultaRegion->close();
-    $stmtActualizar->close();
+    if (isset($stmtActualizar)) {
+        $stmtActualizar->close();
+    }
 }
-// ... (resto del código)
 
 
 if ($apoderado != null) {
